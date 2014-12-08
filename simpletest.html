@@ -1,0 +1,286 @@
+<html>
+	<head>
+		<title>Simple test.js app</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body oncontextmenu="return false;">
+		<script src="three.min.js"></script>
+		<script src="dollar.js"></script>
+		<script src="jquery-1.11.1.min.js"></script>
+		<script src="notify.min.js"></script>
+		<script>
+
+
+
+			var points = new Array();
+			var sprites= [];
+			var dollar = new DollarRecognizer();
+			var isDown = false;
+
+
+			var Z=5;
+			var theta=0.0;
+			var h=0.0;
+			var zoom=75;
+			var Edown=null;
+			var scene = new THREE.Scene();
+			var sceneOrtho = new THREE.Scene();
+			var width = window.innerWidth;
+			var height = window.innerHeight;
+			var cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
+				cameraOrtho.position.z = 10;
+			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+			var hemiLightIN=true;
+			var dirLightIN=true;
+			var lightIN=true;
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+THREE.ImageUtils.crossOrigin = "anonymous";
+texture = THREE.ImageUtils.loadTexture('madera.jpg');
+/*texture = THREE.ImageUtils.loadTexture('madera.jpg', {}, function() {
+    renderer.render(scene);
+});*/
+// -disable-web-security sino no cargaba la imagen
+renderer.autoClear = false;
+
+        var material = new THREE.MeshLambertMaterial({map: texture});
+			var geometry = new THREE.BoxGeometry( 1.4, 1, 1 );
+			var cube = new THREE.Mesh( geometry, material );
+			cube.position.y=0.5;
+scene.add(cube);
+
+			var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
+			texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
+			texturePiso.repeat.set( 80, 80 );
+			geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
+			material  = new THREE.MeshPhongMaterial( {combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+	
+			var floor = new THREE.Mesh( geometry, material );
+			floor.material.side = THREE.DoubleSide;
+			floor.rotation.x = Math.PI/2;
+			floor.receiveShadow = true;
+			scene.add( floor );
+
+
+var hemiLight,dirLight,light;
+
+seHizoLaLuz();
+seHizoElSol();
+
+seHizoElFoco();
+//Y vi que era bueno		
+			camera.position.z = Z;
+			
+
+camera.rotation.order = "YXZ";
+
+renderer.shadowMapEnabled = true;
+
+
+			var render = function () {
+			
+				var x,y,z;
+				c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
+				x=c*Math.cos(theta);
+				z=c*Math.sin(theta);
+
+				camera.position.x = x;
+				camera.position.y = h;
+				camera.position.z = z;
+			
+				requestAnimationFrame(render);
+				camera.lookAt(cube.position);
+				camera.fov = zoom;
+  				camera.updateProjectionMatrix();
+
+				renderer.render(scene, camera);
+				//renderer.clearDepth();
+				renderer.render( sceneOrtho, cameraOrtho );
+			};
+
+			render();
+
+function addSprite(x,y){
+var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color: 'yellow'} ) );
+				sprite.scale.set( 10, 10, 1 );
+				sprite.position.set( x, y, 1 );
+				sceneOrtho.add( sprite );
+	sprites[sprites.length]=sprite;
+}
+function clearSprites(){
+	for (var i = sprites.length - 1; i >= 0; i--) {
+		sceneOrtho.remove(sprites[i]);
+	};
+	sprites=[];
+}
+function seHizoLaLuz(){
+	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+	hemiLight.color.setHSL( 0.6, 1, 0.6 );
+	hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+	hemiLight.position.set( 0, 500, 0 );
+	scene.add( hemiLight );
+}
+function seHizoElSol(){
+dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+dirLight.color.setHSL( 0.1, 1, 0.95 );
+dirLight.position.set( -1, 1.75, 1 );
+dirLight.position.multiplyScalar( 50 );
+scene.add( dirLight );
+
+dirLight.castShadow = true;
+
+dirLight.shadowMapWidth = 2048;
+dirLight.shadowMapHeight = 2048;
+
+var d = 50;
+dirLight.shadowCameraLeft = -d;
+dirLight.shadowCameraRight = d;
+dirLight.shadowCameraTop = d;
+dirLight.shadowCameraBottom = -d;
+
+dirLight.shadowCameraFar = 3500;
+dirLight.shadowBias = -0.0001;
+dirLight.shadowDarkness = 0.35;
+}
+
+function seHizoElFoco(){
+light = new THREE.SpotLight( 0xffffff, 1 );
+light.castShadow = true;
+light.shadowDarkness = 1;
+light.shadowCameraRight     =  10;
+light.shadowCameraLeft     = -10;
+light.shadowCameraTop      =  10;
+light.shadowCameraBottom   = -10;
+light.position.y=4;
+scene.add(light);
+}
+function createSphere(x,y,z,color){
+var sphere = new THREE.Mesh(new THREE.SphereGeometry(0.1), new THREE.MeshPhongMaterial({color: color}) );
+sphere.position.x=x;
+sphere.position.y=y;
+sphere.position.z=z;
+scene.add(sphere);
+}
+function mouseDownEvent(x, y)
+{
+	isDown = true;
+	points[0] = new Point(x, y);
+	x-=width/2;
+	y=height/2-y;
+	
+	points.length = 1; // clear
+	
+	addSprite(x,y);
+}
+function mouseMoveEvent(x, y)
+{
+	if (isDown)
+	{
+		points[points.length] = new Point(x, y);// append
+		x-=width/2;
+		y=height/2-y;
+		addSprite(x,y);
+	}
+}
+function mouseUpEvent(x, y)
+{
+	if (isDown)
+	{
+		isDown = false;
+		if (points.length >= 10)
+		{
+			var result = dollar.Recognize(points,false);
+			$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").");
+			/*var s="new Unistroke(name,new Array(";
+				for (var i = points.length - 1; i >= 0; i-=3) {
+					s+="new Point("+Math.floor(points[i].X)+","+Math.floor(points[i].Y)+"),";
+				};
+				s+="));"
+				$.notify(s,{autoHide:false,clickToHide:false});*/
+		}
+		else // fewer than 10 points were inputted
+		{
+			$.notify("Too few points made. Please try again.");
+		}
+		points=[];
+		clearSprites();
+	}
+}
+function round(n, d) // round 'n' to 'd' decimals
+{
+	d = Math.pow(10, d);
+	return Math.round(n * d) / d
+}
+document.onmousedown = function(e) {
+	switch(e.button){
+		case 0:{
+			Edown=e;
+			break;
+		}
+		case 1:{
+			break;
+		}
+		case 2:{
+			mouseDownEvent(e.clientX,e.clientY);
+			break;
+		}
+	}
+	
+}
+document.onmousemove = function(e) {
+	var k=0.05;
+	if(Edown!=null){
+		theta+= k*(e.pageX-Edown.pageX);
+		if(theta<0){theta+=2*Math.PI;}
+		else if(theta>2*Math.PI){theta-=2*Math.PI;}
+    		h+= k*(e.pageY-Edown.pageY);
+		if(h<-(Z-0.1)){h=-(Z-0.1);}
+		else if(h>(Z-0.1)){h=(Z-0.1);}
+	Edown=e
+	}
+	mouseMoveEvent(e.clientX,e.clientY);
+}
+document.onmouseup = function(e) {
+	Edown=null;
+	mouseUpEvent(e.clientX,e.clientY);
+}
+
+window.onmousewheel=function(e){
+k=0.05;
+zoom-=k*(e.wheelDelta);
+if(zoom<0.1){zoom=0.1;}
+if(zoom>177){zoom=177;}
+}
+window.onkeydown = function (e) {
+
+    var code = e.keyCode ? e.keyCode : e.which;
+switch(code){
+case 49://1
+{
+if(hemiLightIN){scene.remove( hemiLight );}
+else{scene.add( hemiLight );}
+hemiLightIN=!hemiLightIN;
+break;
+}
+case 50:{
+if(dirLightIN){scene.remove(dirLight);}
+else{scene.add(dirLight);}
+dirLightIN=!dirLightIN;
+break;
+}
+case 51:{
+if(lightIN){scene.remove(light);}
+else{scene.add(light);}
+lightIN=!lightIN;
+break;
+}
+}
+
+};
+		</script>
+	</body>
+</html>
