@@ -1,11 +1,22 @@
-function Controls(_camera,wrapper){
+function Controls(_camera,wrapper,_meshes){
 			var selected=null;
 			var Z=5;
 			var theta=0.0;
 			var h=0.0;
 			var Edown=null;
 			var camera=_camera;
+			var meshes=_meshes;
 			var dollarWrapper=wrapper;
+			var	mouseVector = new THREE.Vector3();
+			var raycaster =  new THREE.Raycaster();
+			var velocity=0.1;
+			var forward=false;
+			var backward=false;
+			var right=false;
+			var left=false;
+			var up=false;
+			var down=false;
+
 camera.position.z = Z;
 this.setSelected=function(mesh){
 	selected=mesh;
@@ -24,6 +35,30 @@ this.render=function(){
 				camera.position.y = h;
 				camera.position.z = z;
 				camera.lookAt(selected.position);
+			}else{
+				var vector = new THREE.Vector3( 0, 0, -1 );
+					vector.applyQuaternion( camera.quaternion );
+					if (forward) { //38 up key
+					camera.position.x+=velocity*vector.x;
+					camera.position.z+=velocity*vector.z;
+				    } else if (backward) { 
+					camera.position.x-=velocity*vector.x;
+					camera.position.z-=velocity*vector.z;
+				    } 
+				    vector = new THREE.Vector3( 1, 0,0);
+					vector.applyQuaternion( camera.quaternion );
+				    if (right) { //39 right key
+					camera.position.x+=velocity*vector.x;
+					camera.position.z+=velocity*vector.z;
+				    } else if (left) { //37 left key
+					camera.position.x-=velocity*vector.x;
+					camera.position.z-=velocity*vector.z;
+				    }
+				    if (up) { //38 jump key
+					camera.position.y+=velocity;
+				    } else if (down) { //40 crounch key
+					camera.position.y-=velocity;
+				    } 
 			}
 	dollarwrapper.render();	
 }
@@ -31,10 +66,26 @@ camera.rotation.order = "YXZ";
 document.onmousedown = function(e) {
 	switch(e.button){
 		case 0:{
+			
+			mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
+		mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
+		mouseVector.unproject(camera);
+//projector.unprojectVector(mouseVector, camera);
+mouseVector.sub(camera.position);
+mouseVector.normalize();
+
+raycaster.set(camera.position, mouseVector);
 			Edown=e;
+			intersects = raycaster.intersectObjects(meshes);
+			if(intersects.length!=0){
+
+				selected=intersects[0].object;
+				Z=selected.position.distanceTo(camera.position);
+			}
 			break;
 		}
 		case 1:{
+			selected=null;
 			break;
 		}
 		case 2:{
@@ -90,45 +141,64 @@ else{scene.add(light);}
 lightIN=!lightIN;
 break;
 }
-}
+
+case 38: // up
+case 87: // w
+	forward = true;
+	break;
+case 37: // left
+case 65: // a
+	left = true; 
+	break;
+case 40: // down
+case 83: // s
+	backward = true;
+	break;
+case 39: // right
+case 68: // d
+	right = true;
+	break;
+case 32: // space
+case 81:
+	up = true;
+	break;
+case 17: // space
+case 69:
+	down = true;
+	break;
 
 }
 
-window.onkeypress=function(e){
-	k=0.1;
-	var code = e.keyCode ? e.keyCode : e.which;
-	if (code === 119||code === 87||code === 38) { //38 up key
-	var vector = new THREE.Vector3( 0, 0, -1 );
-	vector.applyQuaternion( camera.quaternion );
-	camera.position.x+=k*vector.x;
-	//camera.position.y+=k*vector.y;
-	camera.position.z+=k*vector.z;
-    } else if (code === 115||code === 83||code === 40) { //40 down key
-        var vector = new THREE.Vector3( 0, 0, 1 );
-	vector.applyQuaternion( camera.quaternion );
-	camera.position.x+=k*vector.x;
-	//camera.position.y+=k*vector.y;
-	camera.position.z+=k*vector.z;
-    } 
-
-    if (code === 100||code === 68||code === 39) { //39 right key
-      var vector = new THREE.Vector3( 1, 0, 0 );
-	vector.applyQuaternion( camera.quaternion );
-	camera.position.x+=k*vector.x;
-	//camera.position.y+=k*vector.y;
-	camera.position.z+=k*vector.z;
-    } else if (code === 97||code === 65||code === 37) { //37 left key
-	var vector = new THREE.Vector3( -1, 0, 0 );
-	vector.applyQuaternion( camera.quaternion );
-	camera.position.x+=k*vector.x;
-	//camera.position.y+=k*vector.y;
-	camera.position.z+=k*vector.z;
-    }
-    if (code === 113||code === 32) { //38 jump key
-	camera.position.y+=k;
-    } else if (code === 101) { //40 crounch key
-	camera.position.y-=k;
-    } 
 }
+window.onkeyup=function(e){
+ var code = e.keyCode ? e.keyCode : e.which;
+ switch( code ) {
+			case 38: // up
+			case 87: // w
+				forward = false;
+				break;
+			case 37: // left
+			case 65: // a
+				left = false;
+				break;
+			case 40: // down
+			case 83: // s
+				backward = false;
+				break;
+			case 39: // right
+			case 68: // d
+				right = false;
+				break;
+			case 32: // space
+			case 81:
+				up = false;
+				break;
+			case 17: // space
+			case 69:
+				down = false;
+				break;
+		}
+}
+
 
 }

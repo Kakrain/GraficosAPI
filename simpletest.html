@@ -23,7 +23,7 @@
 
 
 
-
+			var meshes=[];
 			var hemiLightIN=true;
 			var dirLightIN=true;
 			var lightIN=true;
@@ -34,7 +34,7 @@
 
 			var dollarwrapper=new DollarWrapper(renderer);
 			//dollarwrapper.printGesture=true;
-		var controls=new Controls(camera,dollarwrapper);
+		var controls=new Controls(camera,dollarwrapper,meshes);
 
 
 THREE.ImageUtils.crossOrigin = "anonymous";
@@ -51,6 +51,7 @@ texture = THREE.ImageUtils.loadTexture('madera.jpg');
 			cube.position.y=0.5;
 			//controls.setSelected(cube);
 scene.add(cube);
+meshes.push(cube);
 			var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
 			texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
 			texturePiso.repeat.set( 80, 80 );
@@ -61,8 +62,10 @@ scene.add(cube);
 			floor.material.side = THREE.DoubleSide;
 			floor.rotation.x = Math.PI/2;
 			floor.receiveShadow = true;
-			scene.add( floor );
-
+			//scene.add( floor );
+			//http://soledadpenades.com/articles/three-js-tutorials/object-picking/
+		var axes = buildAxes();
+	scene.add( axes );
 
 var hemiLight,dirLight,light;
 
@@ -90,8 +93,37 @@ renderer.shadowMapEnabled = true;
 			};
 
 			render();
+function buildAxis( src, dst, colorHex, dashed ) {
+		var geom = new THREE.Geometry(),
+			mat; 
 
+		if(dashed) {
+			mat = new THREE.LineDashedMaterial({ linewidth: 1, color: colorHex, dashSize: 5, gapSize: 5 });
+		} else {
+			mat = new THREE.LineBasicMaterial({ linewidth: 1, color: colorHex });
+		}
 
+		geom.vertices.push( src.clone() );
+		geom.vertices.push( dst.clone() );
+
+		var axis = new THREE.Line( geom, mat );
+
+		return axis;
+
+	}
+function buildAxes() {
+		var axes = new THREE.Object3D();
+
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 100, 0, 0 ), 0xFF0000, false ) ); // +X
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( -100, 0, 0 ), 0x800000, true) ); // -X
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 100, 0 ), 0x00FF00, false ) ); // +Y
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, -100, 0 ), 0x008000, true ) ); // -Y
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, 100 ), 0x0000FF, false ) ); // +Z
+		axes.add( buildAxis( new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, -100 ), 0x000080, true ) ); // -Z
+
+		return axes;
+
+	}
 function seHizoLaLuz(){
 	hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
 	hemiLight.color.setHSL( 0.6, 1, 0.6 );

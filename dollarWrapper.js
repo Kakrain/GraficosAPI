@@ -15,7 +15,7 @@ this.render=function(){
 	renderer.render( sceneOrtho, cameraOrtho );
 }
 function addSprite(x,y){
-var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color: 'yellow'} ) );
+var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'yellow'} ) );
 				sprite.scale.set( 10, 10, 1 );
 				sprite.position.set( x, y, 1 );
 				sceneOrtho.add( sprite );
