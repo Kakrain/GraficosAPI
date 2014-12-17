@@ -20,23 +20,19 @@
 			
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 			
-
-
-
 			var meshes=[];
 			var hemiLightIN=true;
 			var dirLightIN=true;
 			var lightIN=true;
-			var renderer = new THREE.WebGLRenderer();
+		var renderer = new THREE.WebGLRenderer({ antialias: true });
 			renderer.setSize( window.innerWidth, window.innerHeight );
-
+			renderer.shadowMapBias = 0.0039;
+			renderer.shadowMapDarkness = 0.5;
+			renderer.shadowMapWidth = 1024;
+			renderer.shadowMapHeight = 1024;
 			document.body.appendChild( renderer.domElement );
 
-			var dollarwrapper=new DollarWrapper(renderer);
-			//dollarwrapper.printGesture=true;
-		var controls=new Controls(camera,dollarwrapper,meshes);
-
-
+			
 THREE.ImageUtils.crossOrigin = "anonymous";
 texture = THREE.ImageUtils.loadTexture('madera.jpg');
 /*texture = THREE.ImageUtils.loadTexture('madera.jpg', {}, function() {
@@ -48,7 +44,11 @@ texture = THREE.ImageUtils.loadTexture('madera.jpg');
         var material = new THREE.MeshLambertMaterial({map: texture});
 			var geometry = new THREE.BoxGeometry( 1.4, 1, 1 );
 			var cube = new THREE.Mesh( geometry, material );
-			cube.position.y=0.5;
+			cube.position.set(1,1,1);
+			new Thing(cube,scene);
+			cube.castShadow=true;
+			cube.receiveShadow=true;
+			//cube.position.y=0.5;
 			//controls.setSelected(cube);
 scene.add(cube);
 meshes.push(cube);
@@ -61,8 +61,15 @@ meshes.push(cube);
 			var floor = new THREE.Mesh( geometry, material );
 			floor.material.side = THREE.DoubleSide;
 			floor.rotation.x = Math.PI/2;
+
 			floor.receiveShadow = true;
-			//scene.add( floor );
+			scene.add( floor );
+			//meshes.push(floor);
+			var dollarwrapper=new DollarWrapper(renderer);
+			//dollarwrapper.printGesture=true;
+		var controls=new Controls(camera,dollarwrapper,meshes,scene,floor);
+
+
 			//http://soledadpenades.com/articles/three-js-tutorials/object-picking/
 		var axes = buildAxes();
 	scene.add( axes );
@@ -71,14 +78,14 @@ var hemiLight,dirLight,light;
 
 seHizoLaLuz();
 seHizoElSol();
-seHizoElFoco();
+//seHizoElFoco();
 //Y vi que era bueno		
 			
 			
 
 
 renderer.shadowMapEnabled = true;
-
+renderer.shadowMapSoft = true;
 
 			var render = function () {
 			
@@ -93,6 +100,39 @@ renderer.shadowMapEnabled = true;
 			};
 
 			render();
+
+function Thing(_mesh,_scene){
+	var mesh=_mesh;
+	var scene=_scene;
+	var box = new THREE.Box3().setFromObject(mesh);
+	var dx=box.max.x-box.min.x;
+	var dy=box.max.y-box.min.y;
+	var dz=box.max.z-box.min.z;
+	
+	var material= new THREE.MeshBasicMaterial( {color:'red', side:THREE.DoubleSide} );
+	var xy=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dy, 1, 1 ), material );
+	xy.position.set(mesh.position.x,mesh.position.y,0);
+	var xz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dz, 1, 1 ), material );
+	xz.position.set(mesh.position.x,0,mesh.position.z);
+	xz.rotation.x=Math.PI/2
+	var yz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dy, dz, 1, 1 ), material );
+	yz.position.set(0,mesh.position.y,mesh.position.z);
+	yz.rotation.y=Math.PI/2
+
+
+
+scene.add(xy);
+scene.add(xz);
+scene.add(yz);
+this.update=function(notupdating){
+
+
+
+
+}
+
+
+}
 function buildAxis( src, dst, colorHex, dashed ) {
 		var geom = new THREE.Geometry(),
 			mat; 

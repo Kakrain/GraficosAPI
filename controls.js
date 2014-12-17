@@ -1,4 +1,5 @@
-function Controls(_camera,wrapper,_meshes){
+function Controls(_camera,wrapper,_meshes,_scene,_piso){
+			var scene=_scene;
 			var selected=null;
 			var Z=5;
 			var theta=0.0;
@@ -16,6 +17,7 @@ function Controls(_camera,wrapper,_meshes){
 			var left=false;
 			var up=false;
 			var down=false;
+			var piso=_piso;
 
 camera.position.z = Z;
 this.setSelected=function(mesh){
@@ -31,9 +33,9 @@ this.render=function(){
 				x=c*Math.cos(theta);
 				z=c*Math.sin(theta);
 
-				camera.position.x = x;
-				camera.position.y = h;
-				camera.position.z = z;
+				camera.position.x = x+selected.position.x;
+				camera.position.y = h+selected.position.y;
+				camera.position.z = z+selected.position.z;
 				camera.lookAt(selected.position);
 			}else{
 				var vector = new THREE.Vector3( 0, 0, -1 );
@@ -81,6 +83,7 @@ raycaster.set(camera.position, mouseVector);
 
 				selected=intersects[0].object;
 				Z=selected.position.distanceTo(camera.position);
+				h=camera.position.y-selected.position.y;
 			}
 			break;
 		}
@@ -116,7 +119,55 @@ document.onmousemove = function(e) {
 }
 document.onmouseup = function(e) {
 	Edown=null;
-	wrapper.mouseUpEvent(e.clientX,e.clientY);
+	var name=wrapper.mouseUpEvent(e.clientX,e.clientY);
+	if(name=="zig-zag"){
+var xy=wrapper.center;
+$.notify("xy: "+xy);
+//e.clientX 
+		mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
+		mouseVector.y = 1 - 2 * (xy[1]/ window.innerHeight );
+		mouseVector.unproject(camera);
+		mouseVector.sub(camera.position);
+		mouseVector.normalize();
+
+			raycaster.set(camera.position, mouseVector);
+
+			intersects = raycaster.intersectObject(piso);
+			if(intersects.length!=0){
+				var p=intersects[0].point;
+				//createSphere(p.x,p.y,p.z,'red');
+			var v=cube.position.clone();
+			v.sub(p);
+			v.normalize();
+			raycaster.set(cube.position,v);
+			raycaster.ray.at(5,p);
+			//createSphere(p.x,p.y,p.z,'blue');
+				var light = new THREE.SpotLight( 0xffffff, 1 );
+				light.castShadow = true;
+				light.shadowDarkness = 0.7;
+				light.shadowCameraRight =  1;
+				light.shadowCameraLeft = -1;
+				light.shadowCameraTop =  1;
+				light.shadowCameraBottom = -1;
+				light.target=cube;
+
+
+				light.position.x=p.x;
+				light.position.y=p.y;
+				light.position.z=p.z;
+				//light.position.set(p);
+				light.shadowCameraFar = 10;
+    			light.shadowCameraNear=1;
+				//light.target.updateMatrixWorld();
+				light.shadowCameraVisible = true;
+				scene.add(light);
+				//meshes.push(light);
+
+floor.material.needsUpdate = true;
+cube.material.needsUpdate = true;
+
+}
+	}
 }
 
 window.onkeydown = function (e) {
@@ -198,6 +249,14 @@ window.onkeyup=function(e){
 				down = false;
 				break;
 		}
+}
+
+function createSphere(x,y,z,color){
+	var sphere = new THREE.Mesh(new THREE.SphereGeometry(0.5), new THREE.MeshPhongMaterial({color: color}) );
+	sphere.position.x = x;
+	sphere.position.y = y;
+	sphere.position.z = z;
+	scene.add(sphere);
 }
 
 
