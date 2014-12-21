@@ -19,6 +19,7 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 			var down=false;
 			var piso=_piso;
 			var draggedIndex=null;
+			var paralelo=new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 ),new THREE.MeshBasicMaterial( {transparent:true,opacity:0.2, side:THREE.DoubleSide}));
 
 camera.position.z = Z;
 this.setSelected=function(mesh){
@@ -86,11 +87,26 @@ raycaster.set(camera.position, mouseVector);
 			if(intersects.length!=0){
 				if(selected!=null){
 					draggedIndex=selected.getMeshes().indexOf(intersects[0].object);
+					if(draggedIndex==0){
+						paralelo.position.x=camera.position.x;
+						paralelo.position.y=camera.position.y;
+						paralelo.position.z=camera.position.z;
+						paralelo.lookAt(intersects[0].object.position);
+						paralelo.position.x=intersects[0].object.position.x;
+						paralelo.position.y=intersects[0].object.position.y;
+						paralelo.position.z=intersects[0].object.position.z;
+						paralelo.updateMatrixWorld();
+					}
 				}else{
 					selected=getThing(intersects[0].object);
 					selected.select();
 					Z=selected.getMeshes()[0].position.distanceTo(camera.position);
 					h=camera.position.y-selected.getMeshes()[0].position.y;
+
+
+					c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
+				
+				theta=Math.atan(camera.position.z/camera.position.x);
 				}
 			}
 			break;
@@ -124,7 +140,7 @@ document.onmousemove = function(e) {
 					mouseVector.sub(camera.position);
 					mouseVector.normalize();
 					raycaster.set(camera.position, mouseVector);
-					selected.moveTo(draggedIndex,raycaster);
+					selected.moveTo(draggedIndex,raycaster,paralelo);
 
 				}else{
 					theta+= k*(e.pageX-Edown.pageX);
@@ -143,7 +159,7 @@ document.onmouseup = function(e) {
 	Edown=null;
 	draggedIndex=null;
 	var name=wrapper.mouseUpEvent(e.clientX,e.clientY);
-	if(name=="zig-zag"){
+	if(name=="zig-zag"&&selected!=null){
 var xy=wrapper.center;
 
 		mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
@@ -171,7 +187,7 @@ var xy=wrapper.center;
 				light.shadowCameraLeft = -1;
 				light.shadowCameraTop =  1;
 				light.shadowCameraBottom = -1;
-				light.target=cube;
+				light.target=selected.getMeshes()[0];
 
 
 				light.position.x=p.x;
