@@ -41,8 +41,44 @@ texture = THREE.ImageUtils.loadTexture('madera.jpg');
 // -disable-web-security sino no cargaba la imagen
 
 
-        var material = new THREE.MeshLambertMaterial({map: texture});
-			var geometry = new THREE.BoxGeometry( 1.4, 1, 1 );
+         
+			var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
+			texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
+			texturePiso.repeat.set( 80, 80 );
+			var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
+			var material  = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+	
+	var floors=[]
+			var floor = new THREE.Mesh( geometry, material );
+			floor.material.side = THREE.DoubleSide;
+			floor.rotation.x = Math.PI/2;
+
+			floor.receiveShadow = true;
+			floors[floors.length]=floor.clone();//xz
+			floor.material.transparent=true;
+			floor.material.opacity=0.0;
+			floor.rotation.x =0;
+			floor.material=floor.material.clone();
+			floor.material.transparent=true;
+			floor.material.wireframe=true;
+			floor.material.opacity=0.0;
+			floors[floors.length]=floor.clone();//yx
+			floor.rotation.y =Math.PI/2;
+			floors[floors.length]=floor.clone();//yz
+
+			scene.add( floors[0] );
+			scene.add( floors[1] );
+			scene.add( floors[2] );
+
+
+
+			var dollarwrapper=new DollarWrapper(renderer);
+			//dollarwrapper.printGesture=true;
+
+
+		var controls=new Controls(camera,dollarwrapper,meshes,scene,floors[0]);
+material = new THREE.MeshLambertMaterial({map: texture});
+			 geometry = new THREE.BoxGeometry( 1.4, 1, 1 );
 			var cube = new THREE.Mesh( geometry, material );
 			cube.position.set(1,1,1);
 			new Thing(cube,scene);
@@ -50,25 +86,11 @@ texture = THREE.ImageUtils.loadTexture('madera.jpg');
 			cube.receiveShadow=true;
 			//cube.position.y=0.5;
 			//controls.setSelected(cube);
-scene.add(cube);
+//scene.add(cube);
+var things=[];
+var thing= new Thing(cube,scene,floors);
+things.push(thing);
 meshes.push(cube);
-			var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
-			texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
-			texturePiso.repeat.set( 80, 80 );
-			geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
-			material  = new THREE.MeshPhongMaterial( {combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
-	
-			var floor = new THREE.Mesh( geometry, material );
-			floor.material.side = THREE.DoubleSide;
-			floor.rotation.x = Math.PI/2;
-
-			floor.receiveShadow = true;
-			scene.add( floor );
-			//meshes.push(floor);
-			var dollarwrapper=new DollarWrapper(renderer);
-			//dollarwrapper.printGesture=true;
-		var controls=new Controls(camera,dollarwrapper,meshes,scene,floor);
-
 
 			//http://soledadpenades.com/articles/three-js-tutorials/object-picking/
 		var axes = buildAxes();
@@ -101,37 +123,113 @@ renderer.shadowMapSoft = true;
 
 			render();
 
-function Thing(_mesh,_scene){
-	var mesh=_mesh;
+function Thing(_mesh,_scene,_floors){
+	var floors=_floors;
+	var meshes=[];
 	var scene=_scene;
-	var box = new THREE.Box3().setFromObject(mesh);
+	var box = new THREE.Box3().setFromObject(_mesh);
 	var dx=box.max.x-box.min.x;
 	var dy=box.max.y-box.min.y;
 	var dz=box.max.z-box.min.z;
 	
+
 	var material= new THREE.MeshBasicMaterial( {color:'red', side:THREE.DoubleSide} );
-	var xy=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dy, 1, 1 ), material );
-	xy.position.set(mesh.position.x,mesh.position.y,0);
 	var xz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dz, 1, 1 ), material );
-	xz.position.set(mesh.position.x,0,mesh.position.z);
+	xz.position.set(_mesh.position.x,0.01,_mesh.position.z);
 	xz.rotation.x=Math.PI/2
+
+	var xy=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dy, 1, 1 ), material );
+	xy.position.set(_mesh.position.x,_mesh.position.y,0.01);
+	
 	var yz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dy, dz, 1, 1 ), material );
-	yz.position.set(0,mesh.position.y,mesh.position.z);
+	yz.position.set(0.01,_mesh.position.y,_mesh.position.z);
 	yz.rotation.y=Math.PI/2
 
+meshes[meshes.length]=_mesh;
+meshes[meshes.length]=xz;
+meshes[meshes.length]=xy;
+meshes[meshes.length]=yz;
+
+xy.geometry.width=1000;
+xy.material.transparent=true;
+xy.material.opacity=0.5;
+	var outline = new THREE.Mesh( meshes[0].geometry, new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.BackSide } ) );
+	outline.scale.multiplyScalar(1.05);
 
 
-scene.add(xy);
-scene.add(xz);
-scene.add(yz);
-this.update=function(notupdating){
-
-
-
-
+scene.add(meshes[0]);
+var setOutlinePosition=function(){
+	outline.position.x = meshes[0].position.x;
+	outline.position.y = meshes[0].position.y;
+	outline.position.z = meshes[0].position.z;
 }
+this.moveTo=function(index,raycast){
+	if(index!=0){//significa que no es el mesh principal	
+		intersects = raycast.intersectObject(floors[index-1]);
+			if(intersects.length!=0){
+				var p=intersects[0].point;
+				meshes[index].position.x=p.x+0.001;
+				meshes[index].position.y=p.y+0.001;
+				meshes[index].position.z=p.z+0.001;
+			}
+	}
+	switch(index){
+		case 0:{
+			break;
+		}
+		case 1:{//xz
+			meshes[0].position.x=meshes[index].position.x;
+			meshes[0].position.z=meshes[index].position.z;
+			setOutlinePosition();
+			meshes[2].position.x=meshes[index].position.x;
+			meshes[3].position.z=meshes[index].position.z;
+			break;
+		}
+		case 2:{//xy
+			meshes[0].position.x=meshes[index].position.x;
+			meshes[0].position.y=meshes[index].position.y;
+			setOutlinePosition();
+			meshes[1].position.x=meshes[index].position.x;
+			meshes[3].position.y=meshes[index].position.y;
+			break;
+		}
+		case 3:{//yz
+			meshes[0].position.z=meshes[index].position.z;
+			meshes[0].position.y=meshes[index].position.y;
+			setOutlinePosition();
+			meshes[1].position.z=meshes[index].position.z;
+			meshes[2].position.y=meshes[index].position.y;
+			break;
+		}
+	}
+}
+this.getMeshes=function(){
+	return meshes;
+}
+this.isSelected=function(mesh){
+	return meshes[0]==mesh;
+}
+this.select=function(){
+	scene.add(meshes[1]);
+	scene.add(meshes[2]);
+	scene.add(meshes[3]);
 
+	setOutlinePosition();
+	scene.add(outline);
+}
+this.unselect=function(){
+	scene.remove(meshes[1]);
+	scene.remove(meshes[2]);
+	scene.remove(meshes[3]);
 
+	scene.remove(outline);
+}
+}
+function getThing(mesh){
+for (var i = things.length - 1; i >= 0; i--) {
+	if(things[i].isSelected(mesh)){return things[i];}
+};
+return null;
 }
 function buildAxis( src, dst, colorHex, dashed ) {
 		var geom = new THREE.Geometry(),

@@ -18,6 +18,7 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 			var up=false;
 			var down=false;
 			var piso=_piso;
+			var draggedIndex=null;
 
 camera.position.z = Z;
 this.setSelected=function(mesh){
@@ -27,16 +28,16 @@ this.getSelected=function(){
 	return selected;
 }
 this.render=function(){
-	if(selected!=null){
+	if(selected!=null&&draggedIndex==null){
 				var x,y,z;
 				c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
 				x=c*Math.cos(theta);
 				z=c*Math.sin(theta);
 
-				camera.position.x = x+selected.position.x;
-				camera.position.y = h+selected.position.y;
-				camera.position.z = z+selected.position.z;
-				camera.lookAt(selected.position);
+				camera.position.x = x+selected.getMeshes()[0].position.x;
+				camera.position.y = h+selected.getMeshes()[0].position.y;
+				camera.position.z = z+selected.getMeshes()[0].position.z;
+				camera.lookAt(selected.getMeshes()[0].position);
 			}else{
 				var vector = new THREE.Vector3( 0, 0, -1 );
 					vector.applyQuaternion( camera.quaternion );
@@ -72,22 +73,32 @@ document.onmousedown = function(e) {
 			mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
 		mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
 		mouseVector.unproject(camera);
-//projector.unprojectVector(mouseVector, camera);
 mouseVector.sub(camera.position);
 mouseVector.normalize();
 
 raycaster.set(camera.position, mouseVector);
 			Edown=e;
-			intersects = raycaster.intersectObjects(meshes);
+			if(selected!=null){
+				intersects=raycaster.intersectObjects(selected.getMeshes());
+			}else{
+				intersects = raycaster.intersectObjects(meshes);
+			}
 			if(intersects.length!=0){
-
-				selected=intersects[0].object;
-				Z=selected.position.distanceTo(camera.position);
-				h=camera.position.y-selected.position.y;
+				if(selected!=null){
+					draggedIndex=selected.getMeshes().indexOf(intersects[0].object);
+				}else{
+					selected=getThing(intersects[0].object);
+					selected.select();
+					Z=selected.getMeshes()[0].position.distanceTo(camera.position);
+					h=camera.position.y-selected.getMeshes()[0].position.y;
+				}
 			}
 			break;
 		}
 		case 1:{
+			if(selected!=null){
+			selected.unselect();
+			}
 			selected=null;
 			break;
 		}
@@ -106,12 +117,23 @@ document.onmousemove = function(e) {
 			camera.rotation.x-= k*(e.pageY-Edown.pageY);
 			camera.rotation.x=Math.max(Math.min(camera.rotation.x,Math.PI/2),-Math.PI/2);
 			}else{
-				theta+= k*(e.pageX-Edown.pageX);
-				if(theta<0){theta+=2*Math.PI;}
-				else if(theta>2*Math.PI){theta-=2*Math.PI;}
-		    		h+= k*(e.pageY-Edown.pageY);
-				if(h<-(Z-0.1)){h=-(Z-0.1);}
-				else if(h>(Z-0.1)){h=(Z-0.1);}
+				if(draggedIndex!=null){
+					mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
+					mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
+					mouseVector.unproject(camera);
+					mouseVector.sub(camera.position);
+					mouseVector.normalize();
+					raycaster.set(camera.position, mouseVector);
+					selected.moveTo(draggedIndex,raycaster);
+
+				}else{
+					theta+= k*(e.pageX-Edown.pageX);
+					if(theta<0){theta+=2*Math.PI;}
+					else if(theta>2*Math.PI){theta-=2*Math.PI;}
+			    		h+= k*(e.pageY-Edown.pageY);
+					if(h<-(Z-0.1)){h=-(Z-0.1);}
+					else if(h>(Z-0.1)){h=(Z-0.1);}
+				}
 			}
 	Edown=e
 	}
@@ -119,11 +141,11 @@ document.onmousemove = function(e) {
 }
 document.onmouseup = function(e) {
 	Edown=null;
+	draggedIndex=null;
 	var name=wrapper.mouseUpEvent(e.clientX,e.clientY);
 	if(name=="zig-zag"){
 var xy=wrapper.center;
-$.notify("xy: "+xy);
-//e.clientX 
+
 		mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
 		mouseVector.y = 1 - 2 * (xy[1]/ window.innerHeight );
 		mouseVector.unproject(camera);
