@@ -1,8 +1,9 @@
-function Controls(_camera,wrapper,_meshes,_scene,_piso){
+function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 
 	//Variables
 	var scene=_scene;
 	var selected=null;
+	var selectedIndex;
 	var Z=5;
 	var theta=0.0;
 	var h=0.0;
@@ -23,7 +24,7 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 	var left=false;
 	var up=false;
 	var down=false;
-	var piso=_piso;
+	var piso=floors[0];
 	var draggedIndex=null;
 	var paralelo=new THREE.Mesh( new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 ),new THREE.MeshBasicMaterial( {transparent:true,opacity:0.2, side:THREE.DoubleSide}));
 
@@ -89,7 +90,6 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 		//Switch for controlling wich button was pressed.
 		switch(e.button){
 			//Left Mouse Button for controlling the camera.
-
 			case 0:{
 				mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
 				mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
@@ -119,8 +119,10 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 							paralelo.updateMatrixWorld();
 						}
 					}else{
-						selected=getThing(intersects[0].object);
-						selected.select();
+						var thingAndIndex = getThing(intersects[0].object);
+						selected = thingAndIndex[0];
+						selectedIndex = thingAndIndex[1];
+						selected.select();						
 						Z=selected.getMeshes()[0].position.distanceTo(camera.position);
 						h=camera.position.y-selected.getMeshes()[0].position.y;
 						c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
@@ -189,6 +191,7 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 		Edown=null;
 		draggedIndex=null;
 		name=wrapper.mouseUpEvent(e.clientX,e.clientY);
+		//If a mesh is selected
 		if(selected!=null){
 			switch(name){
 				//Case Zig-Zag we add a new light relative to the selected mesh.
@@ -231,8 +234,8 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 						break;
 					}
 				}
-				//Case rectangle we got a new Menu relative to the selected mesh.
-				case "rectangle":
+				//Case spiral we got a new Menu relative to the selected mesh.
+				case "spiral":
 				{
 					cubeMenu = new CubeShape(selected);
 					gui = new dat.GUI();
@@ -261,11 +264,47 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 			        break;
 
 				}
+				// Remove a thing from the scene
+				case "x":{
+					selected.unselect();
+					scene.remove(selected.getMeshes()[0]);					
+					things.splice(selectedIndex,1);	
+					selected=null;
+					break;
+				}
+				// Remove a thing from the scene
+				case "delete":{
+					selected.unselect();
+					scene.remove(selected.getMeshes()[0]);					
+					things.splice(selectedIndex,1);	
+					selected=null;
+					break;
+				}
+			}
+		}
+		//If a mesh isn`t selected
+		else{
+			switch(name){
+				//Circle creates a sphere
+				case "circle":{
+					addThing(1);
+					break;
+				}
+				//Rectangle creates a cube
+				case "rectangle":{
+					addThing(2);
+					break;
+				}
+				//Triangle creates a pyramid
+				case "triangle":{
+					addThing(3);
+					break;
+				}
 			}
 		}
 	}
 
-	//Function for modify properties.
+	//Functions for modify properties.
 	var redrawx=function(){
 		selected.resizex(cubeMenu.width);
 	}
@@ -393,4 +432,39 @@ function Controls(_camera,wrapper,_meshes,_scene,_piso){
 				break;
 		}
 	}
+	
+	//Add a thing to the scene depending the gesture
+	function addThing(idMesh){
+		var material = new THREE.MeshLambertMaterial({color: 'red'});
+	
+		switch(idMesh){
+			case 1:{
+				var geometry = new THREE.SphereGeometry(1);
+				break;
+			}
+			case 2:{
+				var geometry = new THREE.CubeGeometry(1,1,1);
+				break;
+			}
+			case 3:{
+				var geometry = new THREE.CylinderGeometry(0,1,1.5,4);
+				break;
+			}
+		}
+
+		var mesh = new THREE.Mesh( geometry, material );
+		if (camera.position.z >= 0)
+			mesh.position.set(camera.position.x, camera.position.y, camera.position.z - 5);
+		else
+			mesh.position.set(camera.position.x, camera.position.y, camera.position.z + 5);
+			
+		camera.lookAt(mesh.position);
+		mesh.castShadow=true;
+		mesh.receiveShadow=true;
+			
+		var thing= new Thing(mesh,scene,floors);
+		things.push(thing);
+		meshes.push(mesh);
+	}
+	
 }

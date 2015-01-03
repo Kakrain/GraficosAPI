@@ -24,6 +24,7 @@
 	var dirLightIN=true;
 	var lightIN=true;
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
+		renderer.setClearColorHex(0xEEEEEE, 1.0);
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		renderer.shadowMapBias = 0.0039;
 		renderer.shadowMapDarkness = 0.5;
@@ -35,8 +36,9 @@
 	var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
 		texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
 		texturePiso.repeat.set( 80, 80 );
-	var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
-	var material  = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+	var geometry = new THREE.PlaneGeometry( 1000, 1000, 1, 1 );
+	//var material  = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+	var material = new THREE.MeshPhongMaterial( { color: 0x999999 } );
 	//Chess Floors
 	var floors=[]
 	var floor = new THREE.Mesh( geometry, material );
@@ -57,10 +59,9 @@
 	var dollarwrapper=new DollarWrapper(renderer);
 	//If u want get the gesture points uncomment this line.
 	//dollarwrapper.printGesture=true;
-	//Main function to controlling the camera and the scene.
-	var controls=new Controls(camera,dollarwrapper,meshes,scene,floors[0]);
+	
 	//Cube
-	material = new THREE.MeshLambertMaterial({map: texture});
+	material = new THREE.MeshLambertMaterial({color: 'red'});
 	geometry = new THREE.BoxGeometry( 1.4, 1, 1 );
 	var cube = new THREE.Mesh( geometry, material );
 		cube.position.set(1,1,1);
@@ -72,6 +73,10 @@
 	things.push(thing);
 	//we add the cube to the mesh for making selectable.
 	meshes.push(cube);
+	
+	//Main function to controlling the camera and the scene.
+	var controls=new Controls(camera,dollarwrapper,meshes,scene,floors,things);
+	
 	//Making axes for reference.
 	var axes = buildAxes();
 		scene.add( axes );
@@ -93,10 +98,17 @@
 	};
 
 	render();
-
+	
+	//Return an array with its thing and index
 	function getThing(mesh){
+		var thingAndIndex = [];
+		
 		for (var i = things.length - 1; i >= 0; i--) {
-			if(things[i].isSelected(mesh)){return things[i];}
+			if(things[i].isSelected(mesh)){
+				thingAndIndex[0] = things[i];
+				thingAndIndex[1] = i;
+				return thingAndIndex;
+			}
 		};
 		return null;
 	}
