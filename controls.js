@@ -439,7 +439,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 	
 		switch(idMesh){
 			case 1:{
-				var geometry = new THREE.SphereGeometry(1);
+				var geometry = new THREE.SphereGeometry(1,20,20);
 				break;
 			}
 			case 2:{
