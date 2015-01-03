@@ -65,7 +65,7 @@ this.mouseUpEvent=function(x, y)
 		if (points.length >= 10)
 		{
 			var result = dollar.Recognize(points,false);
-			$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").");
+			//$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").");
 			if(this.printGesture){
 				var s="new Unistroke(name,new Array(";
 				for (var i = 0; i <points.length; i+=3) {
