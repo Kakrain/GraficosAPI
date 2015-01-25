@@ -23,6 +23,8 @@
 	var hemiLightIN=true;
 	var dirLightIN=true;
 	var lightIN=true;
+	//Things array
+	var things=[];
 	var renderer = new THREE.WebGLRenderer({ antialias: true });
 		renderer.setClearColorHex(0xEEEEEE, 1.0);
 		renderer.setSize( window.innerWidth, window.innerHeight );
@@ -33,12 +35,11 @@
 		document.body.appendChild( renderer.domElement );
 	THREE.ImageUtils.crossOrigin = "anonymous";
 	var texture = THREE.ImageUtils.loadTexture('madera.jpg');
-	var texturePiso = THREE.ImageUtils.loadTexture('chess.gif');
+	var texturePiso = THREE.ImageUtils.loadTexture('chess.jpg');
 		texturePiso.wrapS = texturePiso.wrapT = THREE.RepeatWrapping;			
 		texturePiso.repeat.set( 80, 80 );
-	var geometry = new THREE.PlaneGeometry( 1000, 1000, 1, 1 );
-	//var material  = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
-	var material = new THREE.MeshPhongMaterial( { color: 0x999999 } );
+	var geometry = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
+	var material  = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
 	//Chess Floors
 	var floors=[]
 	var floor = new THREE.Mesh( geometry, material );
@@ -67,13 +68,10 @@
 		cube.position.set(1,1,1);
 		cube.castShadow=true;
 		cube.receiveShadow=true;
-	//Things array
-	var things=[];
 	var thing= new Thing(cube,scene,floors);
 	things.push(thing);
 	//we add the cube to the mesh for making selectable.
 	meshes.push(cube);
-	
 	//Main function to controlling the camera and the scene.
 	var controls=new Controls(camera,dollarwrapper,meshes,scene,floors,things);
 	
@@ -98,20 +96,22 @@
 	};
 
 	render();
+
 	
 	//Return an array with its thing and index
-	function getThing(mesh){
+ 	function getThing(mesh){
 		var thingAndIndex = [];
 		
-		for (var i = things.length - 1; i >= 0; i--) {
+ 		for (var i = things.length - 1; i >= 0; i--) {
 			if(things[i].isSelected(mesh)){
 				thingAndIndex[0] = things[i];
 				thingAndIndex[1] = i;
 				return thingAndIndex;
 			}
-		};
-		return null;
-	}
+ 		};
+ 		return null;
+ 	}
+
 
 	function buildAxis( src, dst, colorHex, dashed ) {
 		var geom = new THREE.Geometry(),

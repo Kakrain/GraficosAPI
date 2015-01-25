@@ -58,6 +58,7 @@ this.mouseUpEvent=function(x, y)
 	this.center[1]+=y;
 	this.center[0]=this.center[0]/2;
 	this.center[1]=this.center[1]/2;
+	var nameAndCentr = [];
 	var name=null;
 	if (isDown)
 	{
@@ -65,7 +66,9 @@ this.mouseUpEvent=function(x, y)
 		if (points.length >= 10)
 		{
 			var result = dollar.Recognize(points,false);
+			var centroid = Centroid(points);
 			//$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").");
+			//$.notify("Centroid: " + centroid.X + "," +centroid.Y);
 			if(this.printGesture){
 				var s="new Unistroke(name,new Array(";
 				for (var i = 0; i <points.length; i+=3) {
@@ -74,7 +77,10 @@ this.mouseUpEvent=function(x, y)
 				s+="));"
 				$.notify(s,{autoHide:false,clickToHide:false});
 			}
+			
 			name=result.Name;
+			nameAndCentr[0] = name;
+			nameAndCentr[1] = centroid;
 			
 		}
 		else // fewer than 10 points were inputted
@@ -84,7 +90,7 @@ this.mouseUpEvent=function(x, y)
 		points=[];
 		clearSprites();
 	}
-	return name;
+	return nameAndCentr;
 }
 function round(n, d) // round 'n' to 'd' decimals
 {

@@ -92,7 +92,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 			//Left Mouse Button for controlling the camera.
 			case 0:{
 				mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
-				mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
+				mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );					
 				mouseVector.unproject(camera);
 				mouseVector.sub(camera.position);
 				mouseVector.normalize();
@@ -108,7 +108,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 					if(selected!=null){
 						//We get the dragged index that correspond to the cube. 
 						draggedIndex=selected.getMeshes().indexOf(intersects[0].object);
-							if(draggedIndex==0){
+						if(draggedIndex==0){
 							paralelo.position.x=camera.position.x;
 							paralelo.position.y=camera.position.y;
 							paralelo.position.z=camera.position.z;
@@ -122,7 +122,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 						var thingAndIndex = getThing(intersects[0].object);
 						selected = thingAndIndex[0];
 						selectedIndex = thingAndIndex[1];
-						selected.select();						
+						selected.select();
 						Z=selected.getMeshes()[0].position.distanceTo(camera.position);
 						h=camera.position.y-selected.getMeshes()[0].position.y;
 						c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
@@ -190,8 +190,59 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		//Reset the variables because the mouse is up.
 		Edown=null;
 		draggedIndex=null;
-		name=wrapper.mouseUpEvent(e.clientX,e.clientY);
-		//If a mesh is selected
+		
+		var nameAndCentr = wrapper.mouseUpEvent(e.clientX,e.clientY);
+		var name = nameAndCentr[0];
+		var centroid2D = nameAndCentr[1];
+		var centroid = new THREE.Vector3();
+		centroid.x = 2 * (centroid2D.X / window.innerWidth) - 1;
+		centroid.y = 1 - 2 * ( centroid2D.Y / window.innerHeight );
+					
+		// Remove an object from the scene
+		if(name == "x" || name == "delete"){	
+			centroid.unproject(camera);
+			centroid.sub(camera.position);
+			centroid.normalize();
+			raycaster.set(camera.position, centroid);		
+			var intersects = raycaster.intersectObjects(meshes);			
+			
+			if (intersects.length != 0){
+				if(selected == null){
+					var thingAndIndex = getThing(intersects[0].object);
+					var thing = thingAndIndex[0];
+					var thingIndex = thingAndIndex[1];							
+					scene.remove(thing.getMeshes()[0]);					
+					things.splice(thingIndex,1);
+				}
+				else{
+					selected.unselect();
+					scene.remove(selected.getMeshes()[0]);					
+					things.splice(selectedIndex,1);	
+					selected=null;					
+				}				
+			}
+		}
+		
+		// Creating objects
+		switch(name){
+			//Circle creates a sphere
+			case "circle":{
+				addThing(1,centroid);
+				break;
+			}
+			//Rectangle creates a cube
+			case "rectangle":{
+				addThing(2,centroid);
+				break;
+			}
+			//Triangle creates a pyramid
+			case "triangle":{
+				addThing(3,centroid);
+				break;
+			}
+ 		}
+		
+		//If a mesh is selected.
 		if(selected!=null){
 			switch(name){
 				//Case Zig-Zag we add a new light relative to the selected mesh.
@@ -236,70 +287,34 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 				}
 				//Case spiral we got a new Menu relative to the selected mesh.
 				case "spiral":
-				{
-					cubeMenu = new CubeShape(selected);
-					gui = new dat.GUI();
-					
-					var fd1 = gui.addFolder('Geometry');
-						fd1.add(cubeMenu, 'width', 0, 10).onChange(redrawx);
-				        fd1.add(cubeMenu, 'height', 0, 10).onChange(redrawy);
-				        fd1.add(cubeMenu, 'depth', 0, 10).onChange(redrawz);
+				{	
+						gui = new dat.GUI();
+						cubeMenu = new CubeShape(selected);
+						var fd1 = gui.addFolder('Geometry');
+							fd1.add(cubeMenu, 'width', 0, 10).onChange(redrawx);
+					        fd1.add(cubeMenu, 'height', 0, 10).onChange(redrawy);
+					        fd1.add(cubeMenu, 'depth', 0, 10).onChange(redrawz);
 
-			        var fd2 = gui.addFolder('Shadows');
-			        	fd2.add(cubeMenu, 'CastShadow').onFinishChange(reshadowcast);
-			        	fd2.add(cubeMenu, 'ReceiveShadow').onFinishChange(reshadowreceive);
-			        	fd2.add(cubeMenu, 'ShadowDarkness',0,1).onChange(reshadowdarkness);
+				        var fd2 = gui.addFolder('Shadows');
+				        	fd2.add(cubeMenu, 'CastShadow').onFinishChange(reshadowcast);
+				        	fd2.add(cubeMenu, 'ReceiveShadow').onFinishChange(reshadowreceive);
+				        	fd2.add(cubeMenu, 'ShadowDarkness',0,1).onChange(reshadowdarkness);
 
-			        var fd3 = gui.addFolder('Material-Color-Texture');
-			       		fd3.add(cubeMenu, 'Phong');
-			       		fd3.add(cubeMenu, 'Gouraud');
-			       		fd3.add(cubeMenu, 'Flat');
-			       		fd3.addColor(cubeMenu, 'Color');
-			       		fd3.add(cubeMenu, 'textures', ['madera','metal','cemento']);
+				        var fd3 = gui.addFolder('Material-Color-Texture');
+				       		fd3.add(cubeMenu, 'Phong').onFinishChange(rematerial);
+				       		fd3.add(cubeMenu, 'Gouraud');
+				       		fd3.add(cubeMenu, 'Flat');
+				       		fd3.addColor(cubeMenu, 'Color');
+				       		fd3.add(cubeMenu, 'textures', ['chess','metal','cemento']).onFinishChange(retexture);
 
-			        // var fd4 = gui.addFolder('Position');
-			        // 	fd4.add(cubeMenu, 'XPosition').onFinishChange(repositionx);
-			        // 	fd4.add(cubeMenu, 'YPosition').onFinishChange(repositiony);
-			        // 	fd4.add(cubeMenu, 'ZPosition').onFinishChange(repositionz);
+				        // var fd4 = gui.addFolder('Position');
+				        // 	fd4.add(cubeMenu, 'XPosition').onFinishChange(repositionx);
+				        // 	fd4.add(cubeMenu, 'YPosition').onFinishChange(repositiony);
+				        // 	fd4.add(cubeMenu, 'ZPosition').onFinishChange(repositionz);
 			        break;
 
 				}
-				// Remove a thing from the scene
-				case "x":{
-					selected.unselect();
-					scene.remove(selected.getMeshes()[0]);					
-					things.splice(selectedIndex,1);	
-					selected=null;
-					break;
-				}
-				// Remove a thing from the scene
-				case "delete":{
-					selected.unselect();
-					scene.remove(selected.getMeshes()[0]);					
-					things.splice(selectedIndex,1);	
-					selected=null;
-					break;
-				}
-			}
-		}
-		//If a mesh isn`t selected
-		else{
-			switch(name){
-				//Circle creates a sphere
-				case "circle":{
-					addThing(1);
-					break;
-				}
-				//Rectangle creates a cube
-				case "rectangle":{
-					addThing(2);
-					break;
-				}
-				//Triangle creates a pyramid
-				case "triangle":{
-					addThing(3);
-					break;
-				}
+
 			}
 		}
 	}
@@ -330,6 +345,16 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		dirLight.shadowDarkness = cubeMenu.ShadowDarkness;
 		piso.material.needsUpdate = true;
 	}
+	var retexture=function(){
+		selected.getMeshes()[0].material.map = THREE.ImageUtils.loadTexture( cubeMenu.textures + '.jpg' );
+		selected.getMeshes()[0].material.needsUpdate = true;
+	}
+	var rematerial=function(){
+		selected.getMeshes()[0].material = new THREE.MeshLambertMaterial({color: 0xFDFF35,shading: THREE.FlatShading});
+		selected.getMeshes()[0].material.needsUpdate = true;
+	}
+
+
 	// var repositionx=function(){
 	// 	selected.getMeshes()[0].position.x = cubeMenu.XPosition;
 	// 	selected.getMeshes()[1].position.x = cubeMenu.XPosition;
@@ -342,6 +367,11 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 	// }
 	// var repositionz=function(){
 	// 	selected.getMeshes()[0].position.z = cubeMenu.ZPosition;
+	// }
+	// var datGuiCleaner=function(){
+	// 	var element = document.getElementsByClassName("dg ac");
+	// 	element[0].parentNode.removeChild(element[0]);
+
 	// }
 
 	//Keyboard listener on key down for the camera keyboard controlling.
@@ -432,11 +462,11 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 				break;
 		}
 	}
-	
-	//Add a thing to the scene depending the gesture
-	function addThing(idMesh){
+
+	//Add a thing to the scene depending the gesture and its centroid
+	function addThing(idMesh,centroid){
 		var material = new THREE.MeshLambertMaterial({color: 'red'});
-	
+		
 		switch(idMesh){
 			case 1:{
 				var geometry = new THREE.SphereGeometry(1,20,20);
@@ -453,12 +483,30 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		}
 
 		var mesh = new THREE.Mesh( geometry, material );
-		if (camera.position.z >= 0)
-			mesh.position.set(camera.position.x, camera.position.y, camera.position.z - 5);
-		else
-			mesh.position.set(camera.position.x, camera.position.y, camera.position.z + 5);
+		
+		centroid.unproject(camera);
+		centroid.sub(camera.position);
+		centroid.normalize();	
+		raycaster.set(camera.position, centroid);		
+		var intersects = raycaster.intersectObject(piso);
+		
+		//If centroid of the gesture intersects with the ground
+		if(intersects.length > 0){
+			//New object position will be relative to the ground
+			mesh.position.set(intersects[ 0 ].point.x, 2, intersects[ 0 ].point.z);
+		}
+		else{
+			//Calculate the direction of camera view
+			var pLocal = new THREE.Vector3( 0, 0, -7 );
+			var pWorld = pLocal.applyMatrix4( camera.matrixWorld );
+			var camDir = pWorld.sub( camera.position );		
+			//New object position will be relative the camera view
+			mesh.position.x = (camDir.x + camera.position.x) + (centroid.x*10);
+			mesh.position.y = (camDir.y + camera.position.y) + (centroid.y*10);
+			mesh.position.z = (camDir.z + camera.position.z) + centroid.z;				
+		}
 			
-		camera.lookAt(mesh.position);
+		//camera.lookAt(mesh.position);
 		mesh.castShadow=true;
 		mesh.receiveShadow=true;
 			
@@ -466,5 +514,4 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		things.push(thing);
 		meshes.push(mesh);
 	}
-	
 }
