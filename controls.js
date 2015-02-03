@@ -8,6 +8,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 	var theta=0.0;
 	var h=0.0;
 	var c= 0;
+	var k=0;
 	var Edown=null;
 	var camera=_camera;
 	var meshes=_meshes;
@@ -32,6 +33,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 	camera.position.set(0,5,5);
 	camera.lookAt(new THREE.Vector3(0,0,0));
 	camera.rotation.order = "YXZ";
+	menuPrincipal();
 
 	//Set the selected mesh.
 	this.setSelected=function(mesh){
@@ -45,6 +47,24 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 	this.render=function(){
 		//If we got a selected array of meshes.
 		if(selected!=null&&draggedIndex==null){
+			if (forward) { //w and up key
+					h+=0.1;
+				} else if (backward) { //s and down key
+					h-=0.1;
+				} 
+			    if (right) { //d and right key
+			    	theta-= 0.05;
+			    } else if (left) { //a and left key
+			    	theta+= 0.05;
+			    }
+			    if (up) { //q and space key
+			    	Z-=0.05;
+			    } else if (down) { //e and ctrl key
+			    	Z+=0.05;		    	
+			    } 
+				if(h<-(Z-0.1)){h=-(Z-0.1);}
+					else if(h>(Z-0.1))
+						{h=(Z-0.1);}
 			var x,y,z;
 			c=Math.sqrt(Math.pow(Z,2)-Math.pow(h,2));
 			x=c*Math.cos(theta);
@@ -58,12 +78,13 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		}
 		//If we don't have any array selected we control the scene with the keyboard.
 		else{
-			var vector = new THREE.Vector3( 0, 0, -1 );
+			var vector;
+			 vector= new THREE.Vector3( 0, 0, -1 );
 			vector.applyQuaternion( camera.quaternion );
-				if (forward) { //w and up key
+				if (up) { //w and up key
 					camera.position.x+=velocity*vector.x;
 					camera.position.z+=velocity*vector.z;
-				} else if (backward) { //s and down key
+				} else if (down) { //s and down key
 					camera.position.x-=velocity*vector.x;
 					camera.position.z-=velocity*vector.z;
 				} 
@@ -76,13 +97,45 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 			    	camera.position.x-=velocity*vector.x;
 			    	camera.position.z-=velocity*vector.z;
 			    }
-			    if (up) { //q and space key
+			    if (forward) { //q and space key
 			    	camera.position.y+=velocity;
-			    } else if (down) { //e and ctrl key
+			    } else if (backward) { //e and ctrl key
 			    	camera.position.y-=velocity;
 			    } 
 			}
 		dollarwrapper.render();	
+	}
+// 	function wheel(e){
+//         var delta = 0;
+//         if (!e) /* For IE. */
+//                 e = window.event;
+//         if (e.wheelDelta) { /* IE/Opera. */
+//                 delta = e.wheelDelta/120;
+//                 k=0.05;
+// 				zoom-=k*(delta);
+// 				if(zoom<0.1){zoom=0.1;}
+// 				if(zoom>75){zoom=75;}
+//         } else if (e.detail) { /** Mozilla case. */
+//                 delta = -e.detail;
+//                 k=0.05;
+// 				zoom-=k*(delta)*10;
+// 				if(zoom<0.1){zoom=0.1;}
+// 				if(zoom>75){zoom=75;}
+//         }
+//         if (e.preventDefault)
+//                 e.preventDefault();
+// 		e.returnValue = false;
+// }
+
+// if (window.addEventListener)
+//         window.addEventListener('DOMMouseScroll', wheel, false);
+// window.onmousewheel = document.onmousewheel = wheel;
+
+	document.onmousewheel=function(e){
+		k=0.05;
+		zoom-=k*(e.wheelDelta);
+		if(zoom<0.1){zoom=0.1;}
+		if(zoom>75){zoom=75;}
 	}
 
 	//Mouse listener on mouse down/Set the selected mesh.
@@ -90,9 +143,10 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		//Switch for controlling wich button was pressed.
 		switch(e.button){
 			//Left Mouse Button for controlling the camera.
+
 			case 0:{
 				mouseVector.x = 2 * (e.clientX / window.innerWidth) - 1;
-				mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );					
+				mouseVector.y = 1 - 2 * ( e.clientY / window.innerHeight );
 				mouseVector.unproject(camera);
 				mouseVector.sub(camera.position);
 				mouseVector.normalize();
@@ -101,6 +155,12 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 				if(selected!=null){
 					//We create a raycaster for the thing mesh if we have selected one.
 					intersects=raycaster.intersectObjects(selected.getMeshes());
+					if(intersects.length==0){
+						selected.unselect();
+						selected=null;
+
+					}
+
 				}else
 					//We create a raycaster for the main mesh if we dont have selected anything yet.
 					intersects = raycaster.intersectObjects(meshes);
@@ -108,7 +168,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 					if(selected!=null){
 						//We get the dragged index that correspond to the cube. 
 						draggedIndex=selected.getMeshes().indexOf(intersects[0].object);
-						if(draggedIndex==0){
+							if(draggedIndex==0){
 							paralelo.position.x=camera.position.x;
 							paralelo.position.y=camera.position.y;
 							paralelo.position.z=camera.position.z;
@@ -117,6 +177,16 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 							paralelo.position.y=intersects[0].object.position.y;
 							paralelo.position.z=intersects[0].object.position.z;
 							paralelo.updateMatrixWorld();
+						}
+							if(draggedIndex==4){
+							//selected.outlineOrientation
+							createSphere(intersects[0].point.x,intersects[0].point.y,intersects[0].point.z,'red');
+							//$.notify("direccion:"+intersects[0].face.normal.x+","+intersects[0].face.normal.y+","+intersects[0].face.normal.z,{autoHide:false});	
+							selected.outlineOrientation=intersects[0].face.normal;
+							selected.interpoint=intersects[0].point;
+							//raycaster.set(selected.getMeshes()[0].position,intersects[0].point);
+							//	intersects=raycaster.intersectObject(selected.getMeshes()[4],true);
+							//$.notify("distance: " +intersects.distance+" point: "+intersects.point+" face: "+intersects.face+" faceindex: "+intersects.indices+" indices: "+intersects.indices+" objects: "+intersects.object,{autoHide:false});	
 						}
 					}else{
 						var thingAndIndex = getThing(intersects[0].object);
@@ -150,7 +220,6 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 
 	//Mouse listener on mouse down/Sent the coordinates of the mouse.
 	document.onmousemove = function(e) {
-		var k=0.05;
 		//If we have left click pressed.
 		if(Edown!=null){
 			//If we don't have selected anything.
@@ -170,7 +239,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 					selected.moveTo(draggedIndex,raycaster,paralelo);
 				}
 				//Else we rotate free the camera.
-				else{
+/*				else{
 					theta+= k*(e.pageX-Edown.pageX);
 					if(theta<0){theta+=2*Math.PI;}
 					else if(theta>2*Math.PI){theta-=2*Math.PI;}
@@ -178,6 +247,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 					if(h<-(Z-0.1)){h=-(Z-0.1);}
 					else if(h>(Z-0.1)){h=(Z-0.1);}
 				}
+*/
 			}
 			Edown=e
 		}
@@ -190,58 +260,72 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		//Reset the variables because the mouse is up.
 		Edown=null;
 		draggedIndex=null;
-		
+		//name=wrapper.mouseUpEvent(e.clientX,e.clientY);
 		var nameAndCentr = wrapper.mouseUpEvent(e.clientX,e.clientY);
 		var name = nameAndCentr[0];
 		var centroid2D = nameAndCentr[1];
 		var centroid = new THREE.Vector3();
 		centroid.x = 2 * (centroid2D.X / window.innerWidth) - 1;
 		centroid.y = 1 - 2 * ( centroid2D.Y / window.innerHeight );
-					
 		// Remove an object from the scene
-		if(name == "x" || name == "delete"){	
+		if(name == "deleteright" || name == "deleteleft"){
 			centroid.unproject(camera);
 			centroid.sub(camera.position);
 			centroid.normalize();
-			raycaster.set(camera.position, centroid);		
-			var intersects = raycaster.intersectObjects(meshes);			
-			
+			raycaster.set(camera.position, centroid);
+			var intersects = raycaster.intersectObjects(meshes);
+
 			if (intersects.length != 0){
 				if(selected == null){
 					var thingAndIndex = getThing(intersects[0].object);
 					var thing = thingAndIndex[0];
-					var thingIndex = thingAndIndex[1];							
-					scene.remove(thing.getMeshes()[0]);					
+					var thingIndex = thingAndIndex[1];
+					scene.remove(thing.getMeshes()[0]);
 					things.splice(thingIndex,1);
 				}
 				else{
 					selected.unselect();
-					scene.remove(selected.getMeshes()[0]);					
-					things.splice(selectedIndex,1);	
-					selected=null;					
-				}				
+					scene.remove(selected.getMeshes()[0]);
+					things.splice(selectedIndex,1);
+					selected=null;
+				}
 			}
 		}
 		
-		// Creating objects
-		switch(name){
-			//Circle creates a sphere
-			case "circle":{
-				addThing(1,centroid);
-				break;
-			}
-			//Rectangle creates a cube
-			case "rectangle":{
-				addThing(2,centroid);
-				break;
-			}
-			//Triangle creates a pyramid
-			case "triangle":{
-				addThing(3,centroid);
-				break;
-			}
- 		}
-		
+		 // Creating objects
+		 switch(name){
+	 //Circle creates a sphere
+		 case "circleright":
+		 case "circleleft":{
+	 	addThing(1,centroid);
+	 	break;
+	 	}
+		 //Rectangle creates a cube
+		 case "rectangleright":
+		 case "rectangleleft":{
+		 	addThing(2,centroid);
+		 	break;
+		 }
+		 //Triangle creates a pyramid
+		 case "triangleleft":
+		 case "triangleright":{
+		 	addThing(3,centroid);
+		 	break;
+		 }
+		  case "planeright":
+		  case "planeleft":{
+		var texturePiso = THREE.ImageUtils.loadTexture('chess.jpg');
+		var geometry = new THREE.PlaneBufferGeometry( 500, 500, 1, 1 );
+		var material = new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+			var meshplane = new THREE.Mesh( geometry, material );
+			meshplane.position.set(0,0,0);
+			meshplane.castShadow=true;
+			meshplane.receiveShadow=true;
+			scene.add(meshplane);
+			camera.position.set(100,100,100);
+		 	break;
+		 }
+		}
 		//If a mesh is selected.
 		if(selected!=null){
 			switch(name){
@@ -285,94 +369,108 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 						break;
 					}
 				}
-				//Case spiral we got a new Menu relative to the selected mesh.
-				case "spiral":
-				{	
-						gui = new dat.GUI();
-						cubeMenu = new CubeShape(selected);
-						var fd1 = gui.addFolder('Geometry');
-							fd1.add(cubeMenu, 'width', 0, 10).onChange(redrawx);
-					        fd1.add(cubeMenu, 'height', 0, 10).onChange(redrawy);
-					        fd1.add(cubeMenu, 'depth', 0, 10).onChange(redrawz);
-
-				        var fd2 = gui.addFolder('Shadows');
-				        	fd2.add(cubeMenu, 'CastShadow').onFinishChange(reshadowcast);
-				        	fd2.add(cubeMenu, 'ReceiveShadow').onFinishChange(reshadowreceive);
-				        	fd2.add(cubeMenu, 'ShadowDarkness',0,1).onChange(reshadowdarkness);
-
-				        var fd3 = gui.addFolder('Material-Color-Texture');
-				       		fd3.add(cubeMenu, 'Phong').onFinishChange(rematerial);
-				       		fd3.add(cubeMenu, 'Gouraud');
-				       		fd3.add(cubeMenu, 'Flat');
-				       		fd3.addColor(cubeMenu, 'Color');
-				       		fd3.add(cubeMenu, 'textures', ['chess','metal','cemento']).onFinishChange(retexture);
-
-				        // var fd4 = gui.addFolder('Position');
-				        // 	fd4.add(cubeMenu, 'XPosition').onFinishChange(repositionx);
-				        // 	fd4.add(cubeMenu, 'YPosition').onFinishChange(repositiony);
-				        // 	fd4.add(cubeMenu, 'ZPosition').onFinishChange(repositionz);
-			        break;
-
-				}
 
 			}
 		}
+
 	}
 
-	//Functions for modify properties.
-	var redrawx=function(){
-		selected.resizex(cubeMenu.width);
-	}
-	var redrawy=function(){
-		selected.resizey(cubeMenu.height);
-	}
-	var redrawz=function(){
-		selected.resizez(cubeMenu.depth);
-	}
-	var reshadowcast=function(){
-		if(cubeMenu.CastShadow == false)
-			selected.getMeshes()[0].castShadow = false;
-		else
-			selected.getMeshes()[0].castShadow = true;
-	}
-	var reshadowreceive=function(){
-		if(cubeMenu.CastShadow == false)
-			selected.getMeshes()[0].receiveShadow = false;
-		else
-			selected.getMeshes()[0].receiveShadow = true;
-	}
-	var reshadowdarkness=function(){
-		dirLight.shadowDarkness = cubeMenu.ShadowDarkness;
-		piso.material.needsUpdate = true;
-	}
-	var retexture=function(){
-		selected.getMeshes()[0].material.map = THREE.ImageUtils.loadTexture( cubeMenu.textures + '.jpg' );
-		selected.getMeshes()[0].material.needsUpdate = true;
-	}
-	var rematerial=function(){
-		selected.getMeshes()[0].material = new THREE.MeshLambertMaterial({color: 0xFDFF35,shading: THREE.FlatShading});
-		selected.getMeshes()[0].material.needsUpdate = true;
-	}
+	
+
+	function menuPrincipal(){
+	var color = Math.random() * 0xffffff;
+	var  meshConfig = new meshConfigData();
+ 	var meshGui = new dat.GUI();
+ 		//Folder Position
+ 		var Properties1 = meshGui.addFolder('Geometria');
+ 		Properties1.add( meshConfig, 'positionX' ).onFinishChange( function(){
+		  selected.getMeshes()[0].position.x = ( meshConfig.positionX);
+		  selected.getMeshes()[1].position.x = ( meshConfig.positionX);
+		  selected.getMeshes()[2].position.x = ( meshConfig.positionX);
+		  selected.getMeshes()[4].position.x = ( meshConfig.positionX);
 
 
-	// var repositionx=function(){
-	// 	selected.getMeshes()[0].position.x = cubeMenu.XPosition;
-	// 	selected.getMeshes()[1].position.x = cubeMenu.XPosition;
-	// 	selected.getMeshes()[2].position.x = cubeMenu.XPosition;
-	// 	selected.getMeshes()[3].position.x = cubeMenu.XPosition;
-	// 	selected.outline.position.x = cubeMenu.XPosition;;
-	// }
-	// var repositiony=function(){
-	// 	selected.getMeshes()[0].position.y = cubeMenu.YPosition;
-	// }
-	// var repositionz=function(){
-	// 	selected.getMeshes()[0].position.z = cubeMenu.ZPosition;
-	// }
-	// var datGuiCleaner=function(){
-	// 	var element = document.getElementsByClassName("dg ac");
-	// 	element[0].parentNode.removeChild(element[0]);
+		} );
+		Properties1.add( meshConfig, 'positionY' ).onFinishChange( function() {
+		  selected.getMeshes()[0].position.y = ( meshConfig.positionY);
+		  selected.getMeshes()[2].position.y = ( meshConfig.positionY);
+		  selected.getMeshes()[3].position.y = ( meshConfig.positionY);
+		  selected.getMeshes()[4].position.y = ( meshConfig.positionY);
+		} );  
+		Properties1.add( meshConfig, 'positionZ' ).onFinishChange( function() {
+		  selected.getMeshes()[0].position.z = ( meshConfig.positionZ);
+		  selected.getMeshes()[1].position.z = ( meshConfig.positionZ);
+		  selected.getMeshes()[3].position.z = ( meshConfig.positionZ);
+		  selected.getMeshes()[4].position.z = ( meshConfig.positionZ);
+		} ); 
+		Properties1.add( meshConfig, 'rotationX', -3.14, 3.14).step(0.01).onChange( function(){
+		  selected.getMeshes()[0].rotation.x = ( meshConfig.rotationX );
+		  selected.getMeshes()[4].rotation.x = ( meshConfig.rotationX );
+		} );
+		Properties1.add( meshConfig, 'rotationY', -3.14, 3.14).step(0.01).onChange( function() {
+		  selected.getMeshes()[0].rotation.y = ( meshConfig.rotationY );
+		  selected.getMeshes()[4].rotation.y = ( meshConfig.rotationY);
+		} );  
+		Properties1.add( meshConfig, 'rotationZ', -3.14, 3.14 ).onChange( function() {
+		  selected.getMeshes()[0].rotation.z = ( meshConfig.rotationZ );
+		  selected.getMeshes()[4].rotation.z = ( meshConfig.rotationZ );
+		} ); 
+		Properties1.add( meshConfig, 'scaleX', 0, 10 ).onChange( function(){
+			selected.getMeshes()[0].scale.x = ( meshConfig.scaleX );
+			selected.getMeshes()[4].scale.x = ( meshConfig.scaleX );
+		} );
+		Properties1.add( meshConfig, 'scaleY', 0, 10 ).onChange( function() {
+			selected.getMeshes()[0].scale.y = ( meshConfig.scaleY );
+			selected.getMeshes()[4].scale.y = ( meshConfig.scaleY );
+		} );  
+		//Revisar error outline scale.
+		Properties1.add( meshConfig, 'scaleZ', 0, 10 ).onChange( function() {
+			selected.getMeshes()[0].scale.z = ( meshConfig.scaleZ );
+			selected.getMeshes()[4].scale.z = ( meshConfig.scaleZ );
+		} ); 
 
-	// }
+		var Properties2 = meshGui.addFolder('Aspecto');
+		Properties2.addColor( meshConfig, 'color1', color ).onChange( function() {
+		    selected.getMeshes()[0].material.color.set(meshConfig.color1); 
+		    selected.getMeshes()[0].material.ambient.set(meshConfig.color1);  
+		  } ); 
+		Properties2.add( meshConfig, 'castShadow', false ).onChange( function() {
+			selected.getMeshes()[0].castShadow = meshConfig.castShadow;
+		} ); 
+		Properties2.add( meshConfig, 'visible', false ).onChange( function() {
+			selected.getMeshes()[0].visible = meshConfig.visible;
+			selected.getMeshes()[4].visible = meshConfig.visible;
+		} ); 
+		Properties2.add( meshConfig, 'material', [ 'normal','basic','phong' ] ).onChange( function() {
+		// console.log( box2Config.material );
+			if ( meshConfig.material === 'normal' ) {
+				selected.getMeshes()[0].material = new THREE.MeshNormalMaterial();
+			} else if ( meshConfig.material === 'basic' ) {
+				selected.getMeshes()[0].material = new THREE.MeshBasicMaterial();
+			} //Revisar error Color Ambiente
+			else if ( meshConfig.material === 'phong' ) {
+				selected.getMeshes()[0].material = new THREE.MeshPhongMaterial();
+			}
+		} );
+
+		Properties2.add( meshConfig, 'wireframe', false ).onChange( function() {
+			selected.getMeshes()[0].material.wireframe = meshConfig.wireframe;
+		} ); 
+		Properties2.add( meshConfig, 'opacity', [ 'quarter','half','three-quarters','full' ] ).onChange( function() {
+		console.log( meshConfig.opacity );
+			if ( meshConfig.opacity == 'quarter' ) {
+				selected.getMeshes()[0].material.opacity = 0.25;
+			} else if ( meshConfig.opacity == 'half' ) {
+				selected.getMeshes()[0].material.opacity = 0.5;    
+			} else if ( meshConfig.opacity == 'three-quarters' ) {
+				selected.getMeshes()[0].material.opacity = 0.75;
+			} else if ( meshConfig.opacity == 'full' ) {
+				selected.getMeshes()[0].material.opacity = 1.0;
+			}
+		} );
+	}
+							
+
 
 	//Keyboard listener on key down for the camera keyboard controlling.
 	window.onkeydown = function (e) {
@@ -463,35 +561,30 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 		}
 	}
 
-	//Add a thing to the scene depending the gesture and its centroid
 	function addThing(idMesh,centroid){
-		var material = new THREE.MeshLambertMaterial({color: 'red'});
-		
-		switch(idMesh){
-			case 1:{
-				var geometry = new THREE.SphereGeometry(1,20,20);
-				break;
+			var material = new THREE.MeshLambertMaterial({color: 'red'});
+			switch(idMesh){
+				case 1:{
+					var geometry = new THREE.SphereGeometry(1,20,20);
+					break;
+				}
+				case 2:{
+					var geometry = new THREE.CubeGeometry(1,1,1);
+					break;
+				}
+				case 3:{
+					var geometry = new THREE.CylinderGeometry(0,1,1.5,4);
+					break;
+				}
 			}
-			case 2:{
-				var geometry = new THREE.CubeGeometry(1,1,1);
-				break;
-			}
-			case 3:{
-				var geometry = new THREE.CylinderGeometry(0,1,1.5,4);
-				break;
-			}
-		}
-
-		var mesh = new THREE.Mesh( geometry, material );
-		
-		centroid.unproject(camera);
-		centroid.sub(camera.position);
-		centroid.normalize();	
-		raycaster.set(camera.position, centroid);		
-		var intersects = raycaster.intersectObject(piso);
-		
-		//If centroid of the gesture intersects with the ground
-		if(intersects.length > 0){
+			var mesh = new THREE.Mesh( geometry, material );
+			centroid.unproject(camera);
+			centroid.sub(camera.position);
+			centroid.normalize();
+			raycaster.set(camera.position, centroid);
+			var intersects = raycaster.intersectObject(piso);
+			//If centroid of the gesture intersects with the ground
+			if(intersects.length > 0){
 			//New object position will be relative to the ground
 			mesh.position.set(intersects[ 0 ].point.x, 2, intersects[ 0 ].point.z);
 		}
@@ -499,17 +592,15 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 			//Calculate the direction of camera view
 			var pLocal = new THREE.Vector3( 0, 0, -7 );
 			var pWorld = pLocal.applyMatrix4( camera.matrixWorld );
-			var camDir = pWorld.sub( camera.position );		
+			var camDir = pWorld.sub( camera.position );
 			//New object position will be relative the camera view
 			mesh.position.x = (camDir.x + camera.position.x) + (centroid.x*10);
 			mesh.position.y = (camDir.y + camera.position.y) + (centroid.y*10);
-			mesh.position.z = (camDir.z + camera.position.z) + centroid.z;				
+			mesh.position.z = (camDir.z + camera.position.z) + centroid.z;
 		}
-			
 		//camera.lookAt(mesh.position);
 		mesh.castShadow=true;
 		mesh.receiveShadow=true;
-			
 		var thing= new Thing(mesh,scene,floors);
 		things.push(thing);
 		meshes.push(mesh);

@@ -17,7 +17,7 @@ this.render=function(){
 }
 function addSprite(x,y){
 var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'yellow'} ) );
-				sprite.scale.set( 10, 10, 1 );
+				sprite.scale.set( 4, 4, 1 );
 				sprite.position.set( x, y, 1 );
 				sceneOrtho.add( sprite );
 	sprites[sprites.length]=sprite;
@@ -67,17 +67,15 @@ this.mouseUpEvent=function(x, y)
 		{
 			var result = dollar.Recognize(points,false);
 			var centroid = Centroid(points);
-			//$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").");
-			//$.notify("Centroid: " + centroid.X + "," +centroid.Y);
+			$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").",{autoHide:true,clickToHide:true,position:"left top"});
 			if(this.printGesture){
 				var s="new Unistroke(name,new Array(";
 				for (var i = 0; i <points.length; i+=3) {
 					s+="new Point("+Math.floor(points[i].X)+","+Math.floor(points[i].Y)+"),";
 				};
 				s+="));"
-				$.notify(s,{autoHide:false,clickToHide:false});
+				$.notify(s,{autoHide:false,clickToHide:false,position:left});
 			}
-			
 			name=result.Name;
 			nameAndCentr[0] = name;
 			nameAndCentr[1] = centroid;
@@ -85,7 +83,7 @@ this.mouseUpEvent=function(x, y)
 		}
 		else // fewer than 10 points were inputted
 		{
-			$.notify("Too few points made. Please try again.");
+			$.notify("Too few points made. Please try again.",{autoHide:true,clickToHide:true,position:"top center"});
 		}
 		points=[];
 		clearSprites();

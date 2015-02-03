@@ -25,14 +25,19 @@ function Thing(_mesh,_scene,_floors){
 	
 	xy.position.set(_mesh.position.x,_mesh.position.y,0.01);
 
+
 	meshes[meshes.length]=_mesh;
 	meshes[meshes.length]=xz;
 	meshes[meshes.length]=xy;
 	meshes[meshes.length]=yz;
-
-	//Create a ilusion about the selected item creating a backside object with a fluorescent color, then resize for making bigger.
+	
 	outline = new THREE.Mesh( meshes[0].geometry, new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.BackSide } ) );
 	outline.scale.multiplyScalar(1.05);
+	meshes[meshes.length]=outline;
+	this.outlineOrientation=null;
+	this.interpoint=null;
+
+
 
 	//Just add the first mesh.
 	scene.add(meshes[0]);
@@ -94,9 +99,29 @@ function Thing(_mesh,_scene,_floors){
 				meshes[2].position.y=meshes[index].position.y;
 				break;
 			}
+			case 4:{//Resize with the outline.	
+			intersects = raycast.intersectObject(plane);
+			if(intersects.length!=0){
+				var p=intersects[0].point;
+			p=new THREE.Vector3(intersects[0].point.x-meshes[0].position.x,intersects[0].point.y-meshes[0].position.y,intersects[0].point.z-meshes[0].position.z);	
+			//p=p.projectOnVector(this.outlineOrientation);
+			var p2=new THREE.Vector3(this.interpoint.x-meshes[0].position.x,this.interpoint.y-meshes[0].position.y,this.interpoint.z-meshes[0].position.z);
+			var box = new THREE.Box3().setFromObject(meshes[0]);
+			$.notify("p2:"+round(p.x,2)+","+round(p2.y,2)+","+round(p2.z,2),{autoHide:false});
+			meshes[0].scale.x=(p.x)*this.outlineOrientation.x/(2*(box.max.x-box.min.x));
+			meshes[0].scale.y=(p.y)*this.outlineOrientation.y/(2*(box.max.y-box.min.y));
+			meshes[0].scale.z=(p.z)*this.outlineOrientation.z/(2*(box.max.z-box.min.z));
+			}
+				break;
+			}
 		}
 	}
 
+	function round(n, d) // round 'n' to 'd' decimals
+		{
+			d = Math.pow(10, d);
+			return Math.round(n * d) / d
+		}
 	//Get meshes function.
 	this.getMeshes=function(){
 		return meshes;
@@ -122,26 +147,6 @@ function Thing(_mesh,_scene,_floors){
 		scene.remove(meshes[2]);
 		scene.remove(meshes[3]);
 		scene.remove(outline);
-	}
-
-	this.resizex=function(x){
-		meshes[0].scale.x = x;
-		outline.scale.x = x*1.05;
-		meshes[1].scale.x = x;
-		meshes[2].scale.x = x;
-
-	}
-	this.resizey=function(y){
-		meshes[0].scale.y = y;
-		outline.scale.y = y*1.05;
-		meshes[2].scale.y = y;
-		meshes[3].scale.y = y;
-	}
-	this.resizez=function(z){
-		meshes[0].scale.z = z;
-		outline.scale.z = z*1.05;
-		meshes[1].scale.y = z;
-		meshes[3].scale.x = z;
 	}
 
 }
