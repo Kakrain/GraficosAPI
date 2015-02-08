@@ -1,4 +1,4 @@
-function Controls(_camera,wrapper,_meshes,_scene,floors,things){
+ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 
 	//Variables
 	var scene=_scene;
@@ -238,16 +238,7 @@ function Controls(_camera,wrapper,_meshes,_scene,floors,things){
 					raycaster.set(camera.position, mouseVector);
 					selected.moveTo(draggedIndex,raycaster,paralelo);
 				}
-				//Else we rotate free the camera.
-/*				else{
-					theta+= k*(e.pageX-Edown.pageX);
-					if(theta<0){theta+=2*Math.PI;}
-					else if(theta>2*Math.PI){theta-=2*Math.PI;}
-					h+= k*(e.pageY-Edown.pageY);
-					if(h<-(Z-0.1)){h=-(Z-0.1);}
-					else if(h>(Z-0.1)){h=(Z-0.1);}
-				}
-*/
+
 			}
 			Edown=e
 		}

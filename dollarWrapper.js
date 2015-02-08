@@ -39,7 +39,6 @@ this.mouseDownEvent=function(x, y)
 	y=height/2-y;
 	
 	points.length = 1; // clear
-	
 	addSprite(x,y);
 }
 this.mouseMoveEvent=function(x, y)
