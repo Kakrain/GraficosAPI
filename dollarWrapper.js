@@ -6,7 +6,7 @@ function DollarWrapper(_renderer){
 	var renderer=_renderer;
 	var width = window.innerWidth;
 	var height = window.innerHeight;
-	renderer.autoClear = false;
+	//renderer.autoClear = false;
 	var cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
 	cameraOrtho.position.z = 10;
 	var sceneOrtho = new THREE.Scene();

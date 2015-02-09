@@ -27,17 +27,18 @@
 	var lightIN=true;
 	//Things array
 	var things=[];
-	var renderer = new THREE.WebGLRenderer({ antialias: true });
-		renderer.setClearColorHex(0xEEEEEE, 1);
+	var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true});
+		renderer.setClearColor( 0x000000 );
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		renderer.shadowMapBias = 0.0039;
+		/*renderer.shadowMapBias = 0.0039;
 		renderer.shadowMapDarkness = 0.5;
 		renderer.shadowMapWidth = 1024;
-		renderer.shadowMapHeight = 1024;
+		renderer.shadowMapHeight = 1024;*/
 		renderer.shadowMapEnabled = true;
 		renderer.shadowMapSoft = true;
 		document.body.appendChild( renderer.domElement );
-		THREE.ImageUtils.crossOrigin = "anonymous";
+		//THREE.ImageUtils.crossOrigin = "anonymous";
+
 	
 	var geometryPlanes = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
 	var materialPlanes  = new THREE.MeshPhongMaterial();
@@ -59,14 +60,31 @@
 	var dollarwrapper=new DollarWrapper(renderer);
 	//If u want get the gesture points uncomment this line.
 	//dollarwrapper.printGesture=true;
+
 	//Main function to controlling the camera and the scene.
 	var controls= new THREE.OrbitControls(camera,dollarwrapper,meshes,scene,floors,things);
+	
 	//Making axes for reference.
 	var axes = buildAxes();
-		scene.add( axes );
+	scene.add( axes );
+
 	//Lights
 	var ambienLight;
 	seHizoLaLuz();
+
+	/*var flareTexture = THREE.ImageUtils.loadTexture("whiteFlare.png");
+			var flareColor = new THREE.Color(0xffffff);
+			
+			var light1 = new THREE.DirectionalLight(0xFFFFFF, 1.5);
+			light1.position.set(0,50,0);
+			light1.castShadow = true;
+			scene.add(light1);	
+			bulb1 = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
+			bulb1.position = light1.position;
+			scene.add(bulb1);*/
+
+
+    
 	camera.position.set(100,125,250);
 
 	//Render function loop.
@@ -127,8 +145,24 @@
 		}
 	
 	function seHizoLaLuz(){
-		ambienLight = new THREE.AmbientLight( 0xffffff, 0xffffff, 0.6 );
+		ambienLight = new THREE.AmbientLight( 0x0c0c0c );
 		scene.add( ambienLight );
+
+        var light1 = new THREE.DirectionalLight(0xFFFFFF , 0.3);
+		light1.position.set(-200,150,-200);
+		scene.add(light1);
+
+		var light2 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+		light2.position.set(200,150,200);
+		scene.add(light2);
+
+		var light3 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+		light3.position.set(-200,150,200);
+		scene.add(light3);
+
+		var light4 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+		light4.position.set(200,150,-200);
+		scene.add(light4);
 
 	}
 

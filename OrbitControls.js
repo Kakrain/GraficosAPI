@@ -441,16 +441,58 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 						things.splice(thingIndex,1);
 					}
 					else{
-						selected.unselect();
-						scene.remove(selected.getMeshes()[0]);
-						things.splice(selectedIndex,1);
-						selected=null;
+						if(intersects[0].object == selected.getMeshes()[0]){
+							selected.unselect();
+							scene.remove(selected.getMeshes()[0]);
+							things.splice(selectedIndex,1);
+							selected=null;
+						}
+						else{
+							var thingAndIndex = getThing(intersects[0].object);
+							var thing = thingAndIndex[0];
+							var thingIndex = thingAndIndex[1];
+							scene.remove(thing.getMeshes()[0]);
+							things.splice(thingIndex,1);
+						}
 					}
 				}
 			}
 			
-			 // Creating objects
+			// Creating objects
 			switch(name){
+				/*case "zig-zag":{
+					centroid.unproject(scope.object);
+					centroid.sub(scope.object.position);
+					centroid.normalize();
+					raycaster.set(scope.object.position, centroid);
+					var intersects = raycaster.intersectObjects(meshes);
+
+					if (intersects.length != 0){
+						if(selected == null){
+							var thingAndIndex = getThing(intersects[0].object);
+							var thing = thingAndIndex[0];
+							var thingIndex = thingAndIndex[1];
+							scene.remove(thing.getMeshes()[0]);
+							things.splice(thingIndex,1);
+						}
+						else{
+							if(intersects[0].object == selected.getMeshes()[0]){
+								selected.unselect();
+								scene.remove(selected.getMeshes()[0]);
+								things.splice(selectedIndex,1);
+								selected=null;
+							}
+							else{
+								var thingAndIndex = getThing(intersects[0].object);
+								var thing = thingAndIndex[0];
+								var thingIndex = thingAndIndex[1];
+								scene.remove(thing.getMeshes()[0]);
+								things.splice(thingIndex,1);
+							}
+						}
+					}
+				}*/
+
 	 			//Circle creates a sphere
 			 	case "circleright":
 			 	case "circleleft":{
@@ -473,7 +515,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		  		case "planeleft":{
 					var texturePiso = THREE.ImageUtils.loadTexture('chess.jpg');
 					var geometry = new THREE.PlaneBufferGeometry( 500, 500, 1, 1 );
-					var material = new THREE.MeshLambertMaterial({wireframe: true});//new THREE.MeshPhongMaterial( { combine: THREE.MixOperation, map:texturePiso, ambient: 0xffffff, specular: 0x050505 } );
+					var material = new THREE.MeshPhongMaterial( { /*combine: THREE.MixOperation, map:texturePiso*/color: 0xcccccc} );
 						meshplane = new THREE.Mesh( geometry, material );
 						meshplane.position.set(0,0,0);
 						meshplane.rotation.x=-0.5*Math.PI;
@@ -484,50 +526,68 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		 		}
 			}
 			//If a mesh is selected.
-			if(selected!=null){
-				switch(name){
+			switch(name){
 					//Case X we add a new light relative to the selected mesh.
-					case "Xleft":
-					case "Xright":{
-						var xy=wrapper.center;
-						mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
-						mouseVector.y = 1 - 2 * (xy[1]/ window.innerHeight );
-						mouseVector.unproject(scope.object);
-						mouseVector.sub(scope.object.position);
-						mouseVector.normalize();
-						raycaster.set(scope.object.position, mouseVector);
-						intersects = raycaster.intersectObject(piso);
-						if(intersects.length!=0){
+				case "Xleft":
+				case "Xright":{
+					var flareTexture = THREE.ImageUtils.loadTexture("whiteFlare.jpg");
+					var flareColor = new THREE.Color(0xffffff);
+					var xy=wrapper.center;
+					mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
+					mouseVector.y = 1 - 2 * (xy[1]/ window.innerHeight );
+					mouseVector.unproject(scope.object);
+					mouseVector.sub(scope.object.position);
+					mouseVector.normalize();
+					raycaster.set(scope.object.position, mouseVector);
+					intersects = raycaster.intersectObject(piso);
+					if(intersects.length!=0){
+						if(selected!=null){
 							var p=intersects[0].point;
 							var v= selected.getMeshes()[0].position.clone();
 							v.sub(p);
 							v.normalize();
 							raycaster.set(selected.getMeshes()[0].position,v);
-							raycaster.ray.at(5,p);
-							var light = new THREE.SpotLight( 0xEEEEEE, 1 );
-							light.castShadow = true;
-							light.shadowDarkness = 0.7;
-							light.shadowCameraRight =  1;
-							light.shadowCameraLeft = -1;
-							light.shadowCameraTop =  1;
-							light.shadowCameraBottom = -1;
-							light.shadowCameraFar = 100;
-							light.shadowCameraNear= 25;
+							raycaster.ray.at(200,p);
+							var light = new THREE.SpotLight(0xEEEEEE);
 							light.target=selected.getMeshes()[0];
 							light.position.x=p.x;
 							light.position.y=p.y;
-							light.position.z=p.z;						
-							//light.target.updateMatrixWorld();
+							light.position.z=p.z;					
 							light.shadowCameraVisible = true;
+							light.castShadow = true;
+							light.shadowDarkness = 0.7;
+							light.shadowCameraFov = 10;
 							scene.add(light);
-							//Important parameters to appreciate the changes.
-							piso.material.needsUpdate = true;
-							selected.getMeshes()[0].material.needsUpdate = true;
-							break;
-						}
-					}
+							//Bulb of light	
+							var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
+							bulb.position.set(light.position.x, light.position.y, light.position.z);
+							scene.add(bulb);
 
+							selected.getMeshes()[0].material.needsUpdate = true;
+						}
+						else{
+							var light = new THREE.SpotLight(0xEEEEEE);
+							light.shadowCameraFov = 10;
+							light.shadowDarkness = 0.7;
+							light.position.set(intersects[0].point.x, 200, intersects[0].point.z);
+							light.target.position.set(intersects[0].point.x, 0, intersects[0].point.z);
+							light.target.updateMatrixWorld();
+							light.castShadow = true;
+							light.shadowCameraVisible = true;	
+							scene.add(light);	
+							//Bulb of light	
+							var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
+							bulb.position.set(light.position.x, light.position.y, light.position.z);
+							scene.add(bulb);					
+						}
+						//Important parameters to appreciate the changes.
+						if(meshplane != null)
+							meshplane.material.needsUpdate = true;
+												
+					}
+					break;
 				}
+
 			}
 		}
 		scope.domElement.removeEventListener( 'mousemove', onMouseMove, false );
@@ -613,14 +673,14 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 
 
 	function addThing(idMesh,centroid){
-		var material = new THREE.MeshLambertMaterial({wireframe:true});
+		var material = new THREE.MeshLambertMaterial({color: 'red', wireframe: true});
 		switch(idMesh){
 			case 1:{
 				var geometry = new THREE.SphereGeometry(22,20,20);
 				break;
 			}
 			case 2:{
-				var geometry = new THREE.CubeGeometry(30,30,30);
+				var geometry = new THREE.BoxGeometry(30,30,30);
 				break;
 			}
 			case 3:{
@@ -640,7 +700,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		//If centroid of the gesture intersects with the ground
 		if(intersects.length > 0){
 			//New object position will be relative to the ground
-			mesh.position.set(intersects[ 0 ].point.x, 2, intersects[ 0 ].point.z);
+			mesh.position.set(intersects[ 0 ].point.x, 24, intersects[ 0 ].point.z);
 		}
 		else{
 			//Calculate the direction of camera view
@@ -660,7 +720,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		}
 		mesh.castShadow=true;
 		mesh.receiveShadow=true;
-		var thing= new Thing(mesh,scene,floors);
+		var thing = new Thing(mesh,scene,floors);
 		things.push(thing);
 		meshes.push(mesh);
 	}
