@@ -27,7 +27,7 @@
 	var lightIN=true;
 	//Things array
 	var things=[];
-	var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true});
+	var renderer = new THREE.WebGLRenderer({antialias: true});
 		renderer.setClearColor( 0x000000 );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		/*renderer.shadowMapBias = 0.0039;
@@ -35,7 +35,7 @@
 		renderer.shadowMapWidth = 1024;
 		renderer.shadowMapHeight = 1024;*/
 		renderer.shadowMapEnabled = true;
-		renderer.shadowMapSoft = true;
+		//renderer.shadowMapSoft = true;
 		document.body.appendChild( renderer.domElement );
 		//THREE.ImageUtils.crossOrigin = "anonymous";
 

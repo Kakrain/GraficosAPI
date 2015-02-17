@@ -6,7 +6,7 @@ function DollarWrapper(_renderer){
 	var renderer=_renderer;
 	var width = window.innerWidth;
 	var height = window.innerHeight;
-	//renderer.autoClear = false;
+	renderer.autoClear = false;
 	var cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
 	cameraOrtho.position.z = 10;
 	var sceneOrtho = new THREE.Scene();
@@ -30,6 +30,7 @@ function clearSprites(){
 }
 this.mouseDownEvent=function(x, y)
 {
+	//renderer.autoClear = false;
 	this.center[0]=x;
 	this.center[1]=y;
 	
@@ -87,6 +88,7 @@ this.mouseUpEvent=function(x, y)
 		points=[];
 		clearSprites();
 	}
+	//renderer.autoClear = true;
 	return nameAndCentr;
 }
 function round(n, d) // round 'n' to 'd' decimals

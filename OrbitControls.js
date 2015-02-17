@@ -110,7 +110,10 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 	var piso=floors[0];
 	var draggedIndex=null;
 	var meshplane = null;
-	var paralelo=new THREE.Mesh( new THREE.PlaneBufferGeometry( 10000, 10000, 1, 1 ),new THREE.MeshBasicMaterial( {transparent:true,opacity:0.2, side:THREE.DoubleSide}));
+	var paralelo=new THREE.Mesh( new THREE.PlaneBufferGeometry( 10000, 10000, 1, 1 ),new THREE.MeshBasicMaterial( {transparent:true, opacity:0, side:THREE.DoubleSide}));
+
+	scene.add(paralelo);
+
 
 	// events
 
@@ -335,17 +338,18 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 			}
 			if(intersects.length!=0){
 				if(selected!=null){
-					//We get the dragged index that correspond to the cube. 
+					//We get the dragged index that correspond to the object. 
 					draggedIndex=selected.getMeshes().indexOf(intersects[0].object);
 					if(draggedIndex==0){
-					paralelo.position.x=scope.object.position.x;
-					paralelo.position.y=scope.object.position.y;
-					paralelo.position.z=scope.object.position.z;
-					paralelo.lookAt(intersects[0].object.position);
-					paralelo.position.x=intersects[0].object.position.x;
-					paralelo.position.y=intersects[0].object.position.y;
-					paralelo.position.z=intersects[0].object.position.z;
-					paralelo.updateMatrixWorld();
+						paralelo.position.x=scope.object.position.x;
+						paralelo.position.y=scope.object.position.y;
+						paralelo.position.z=scope.object.position.z;
+						paralelo.lookAt(intersects[0].object.position);
+						paralelo.position.x=intersects[0].object.position.x;
+						paralelo.position.y=intersects[0].object.position.y;
+						paralelo.position.z=intersects[0].object.position.z;
+						paralelo.updateMatrixWorld();
+
 					}
 				}else{
 					var thingAndIndex = getThing(intersects[0].object);
@@ -369,6 +373,16 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 			/*if ( scope.noPan === true ) { return; }
 			state = STATE.PAN;
 			panStart.set( event.clientX, event.clientY );*/
+
+			// Set paralelo in front of the camera view
+			var pLocal = new THREE.Vector3( 0, 0, -150 );
+			var pWorld = pLocal.applyMatrix4( scope.object.matrixWorld );
+			var camDir = pWorld.sub( scope.object.position );
+			paralelo.position.x = camDir.x + scope.object.position.x;
+			paralelo.position.y = camDir.y + scope.object.position.y;
+			paralelo.position.z = camDir.z + scope.object.position.z;
+			paralelo.lookAt(scope.object.position);
+		
 			wrapper.mouseDownEvent(event.clientX,event.clientY);
 
 		}
@@ -417,6 +431,9 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 
 		if ( scope.enabled === false ) return;
 		draggedIndex=null;
+
+
+		// Right clic
 		if ( event.button === 2 ) {			
 			var nameAndCentr = wrapper.mouseUpEvent(event.clientX,event.clientY);
 			var name = nameAndCentr[0];
@@ -460,39 +477,6 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 			
 			// Creating objects
 			switch(name){
-				/*case "zig-zag":{
-					centroid.unproject(scope.object);
-					centroid.sub(scope.object.position);
-					centroid.normalize();
-					raycaster.set(scope.object.position, centroid);
-					var intersects = raycaster.intersectObjects(meshes);
-
-					if (intersects.length != 0){
-						if(selected == null){
-							var thingAndIndex = getThing(intersects[0].object);
-							var thing = thingAndIndex[0];
-							var thingIndex = thingAndIndex[1];
-							scene.remove(thing.getMeshes()[0]);
-							things.splice(thingIndex,1);
-						}
-						else{
-							if(intersects[0].object == selected.getMeshes()[0]){
-								selected.unselect();
-								scene.remove(selected.getMeshes()[0]);
-								things.splice(selectedIndex,1);
-								selected=null;
-							}
-							else{
-								var thingAndIndex = getThing(intersects[0].object);
-								var thing = thingAndIndex[0];
-								var thingIndex = thingAndIndex[1];
-								scene.remove(thing.getMeshes()[0]);
-								things.splice(thingIndex,1);
-							}
-						}
-					}
-				}*/
-
 	 			//Circle creates a sphere
 			 	case "circleright":
 			 	case "circleleft":{
@@ -511,6 +495,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		 			addThing(3,centroid);
 		 			break;
 				}
+				//Create a plane
 		  		case "planeright":
 		  		case "planeleft":{
 					var texturePiso = THREE.ImageUtils.loadTexture('chess.jpg');
@@ -561,7 +546,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 							//Bulb of light	
 							var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
 							bulb.position.set(light.position.x, light.position.y, light.position.z);
-							scene.add(bulb);
+							//scene.add(bulb);
 
 							selected.getMeshes()[0].material.needsUpdate = true;
 						}
@@ -578,7 +563,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 							//Bulb of light	
 							var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
 							bulb.position.set(light.position.x, light.position.y, light.position.z);
-							scene.add(bulb);					
+							//scene.add(bulb);					
 						}
 						//Important parameters to appreciate the changes.
 						if(meshplane != null)
@@ -621,6 +606,14 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 			scope.dollyIn();
 
 		}
+		// Set paralelo in front of the camera view
+		var pLocal = new THREE.Vector3( 0, 0, -150 );
+		var pWorld = pLocal.applyMatrix4( scope.object.matrixWorld );
+		var camDir = pWorld.sub( scope.object.position );
+		paralelo.position.x = camDir.x + scope.object.position.x;
+		paralelo.position.y = camDir.y + scope.object.position.y;
+		paralelo.position.z = camDir.z + scope.object.position.z;
+		paralelo.lookAt(scope.object.position);
 
 	}
 
@@ -703,20 +696,11 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 			mesh.position.set(intersects[ 0 ].point.x, 24, intersects[ 0 ].point.z);
 		}
 		else{
-			//Calculate the direction of camera view
-			var pLocal = new THREE.Vector3( 0, 0, -150 );
-			var pWorld = pLocal.applyMatrix4( scope.object.matrixWorld );
-			var camDir = pWorld.sub( scope.object.position );
-			//$.notify("camdir: " + camDir.x+","+camDir.y+","+camDir.z);
-			//New object position will be relative the camera view
-			/*paralelo.position.set(camDir);
-			paralelo.lookAt(camera.position);
-			raycaster.set(camera.position, centroid);
+			//New object position will be relative to the camera view
 			intersects = raycaster.intersectObject(paralelo);
-			mesh.position.set(intersects[ 0 ].object.position);*/
-			mesh.position.x = (camDir.x + scope.object.position.x) + (centroid.x*100);
-			mesh.position.y = (camDir.y + scope.object.position.y) + (centroid.y*100);
-			mesh.position.z = (camDir.z + scope.object.position.z) + centroid.z;
+			mesh.position.x = intersects[ 0 ].point.x;
+			mesh.position.y = intersects[ 0 ].point.y;
+			mesh.position.z = intersects[ 0 ].point.z;
 		}
 		mesh.castShadow=true;
 		mesh.receiveShadow=true;
