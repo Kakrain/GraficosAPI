@@ -5,8 +5,6 @@
 	body { margin: 0; }
 	canvas { width: 100%; height: 100% }
 	</style>
-</head>
-<body oncontextmenu="return false;">
 	<script src="three.min.js"></script>
 	<script src="dollar.js"></script>
 	<script src="jquery-1.11.1.min.js"></script>
@@ -16,30 +14,27 @@
 	<script src="dat.gui.js"></script>
 	<script src="menus.js"></script>
 	<script src="thing.js"></script>
-	<script>
+</head>
+<body oncontextmenu="return false;">
+<script>
 	
 	var scene = new THREE.Scene();
 	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
 	var meshes=[];
 	var hemiLightIN=true;
 	var dirLightIN=true;
-	var zoom=75;
 	var lightIN=true;
-	//Things array
+	//Arreglo de things.
 	var things=[];
+	//Renderer y sus propiedades.
 	var renderer = new THREE.WebGLRenderer({antialias: true});
 		renderer.setClearColor( 0x000000 );
 		renderer.setSize( window.innerWidth, window.innerHeight );
-		/*renderer.shadowMapBias = 0.0039;
-		renderer.shadowMapDarkness = 0.5;
-		renderer.shadowMapWidth = 1024;
-		renderer.shadowMapHeight = 1024;*/
 		renderer.shadowMapEnabled = true;
-		//renderer.shadowMapSoft = true;
 		document.body.appendChild( renderer.domElement );
 		//THREE.ImageUtils.crossOrigin = "anonymous";
 
-	
+	//Planos de la escena para realizar el picking y el ray tracing.
 	var geometryPlanes = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
 	var materialPlanes  = new THREE.MeshPhongMaterial();
 	var floors=[]
@@ -56,38 +51,22 @@
 		floors[0].updateMatrixWorld();
 		floors[1].updateMatrixWorld();
 		floors[2].updateMatrixWorld();
-
+	//Encapsulado del dollar.js
 	var dollarwrapper=new DollarWrapper(renderer);
-	//If u want get the gesture points uncomment this line.
-	//dollarwrapper.printGesture=true;
-
-	//Main function to controlling the camera and the scene.
-	var controls= new THREE.OrbitControls(camera,dollarwrapper,meshes,scene,floors,things);
+	//Funcion para el control de la camara y el core del API.
+	var controls= new THREE.OrbitControls(camera,dollarwrapper,meshes,scene,floors,things,renderer.domElement);
 	
-	//Making axes for reference.
+	//Creamos los axis.
 	var axes = buildAxes();
 	scene.add( axes );
 
-	//Lights
+	//Anadimos las luces.
 	var ambienLight;
 	seHizoLaLuz();
-
-	/*var flareTexture = THREE.ImageUtils.loadTexture("whiteFlare.png");
-			var flareColor = new THREE.Color(0xffffff);
-			
-			var light1 = new THREE.DirectionalLight(0xFFFFFF, 1.5);
-			light1.position.set(0,50,0);
-			light1.castShadow = true;
-			scene.add(light1);	
-			bulb1 = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
-			bulb1.position = light1.position;
-			scene.add(bulb1);*/
-
-
     
 	camera.position.set(100,125,250);
 
-	//Render function loop.
+	//Funcion de renderizado.
 	var render = function () {
 		controls.update();
 		requestAnimationFrame(render);
@@ -98,7 +77,7 @@
 	render();
 
 	
-	//Return an array with its thing and index
+	//Funcion auxiliar para obtener el thing y el index del mesh que se le pase.
  	function getThing(mesh){
 		var thingAndIndex = [];
 		
@@ -112,7 +91,7 @@
  		return null;
  	}
 
-
+ 	//Funciones de creacion de los axis.
 	function buildAxis( src, dst, colorHex, dashed ) {
 		var geom = new THREE.Geometry(),
 		mat; 
@@ -144,6 +123,7 @@
 			return axes;
 		}
 	
+	//Funcion de control de las luces.
 	function seHizoLaLuz(){
 		ambienLight = new THREE.AmbientLight( 0x0c0c0c );
 		scene.add( ambienLight );

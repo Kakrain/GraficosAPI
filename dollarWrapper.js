@@ -1,35 +1,45 @@
 function DollarWrapper(_renderer){
+	//Array de los puntos
 	var points = new Array();
+	//Array de los Sprites
 	var sprites= [];
+	//Dollar.js
 	var dollar = new DollarRecognizer();
 	var isDown = false;
 	var renderer=_renderer;
 	var width = window.innerWidth;
 	var height = window.innerHeight;
 	renderer.autoClear = false;
+	//Camara ortografica.
 	var cameraOrtho = new THREE.OrthographicCamera( - width / 2, width / 2, height / 2, - height / 2, 1, 10 );
 	cameraOrtho.position.z = 10;
 	var sceneOrtho = new THREE.Scene();
+	//Impresion de gesto.
 	this.printGesture=false;
 	this.center=[0,0];
-this.render=function(){
-	renderer.render( sceneOrtho, cameraOrtho );
-}
-function addSprite(x,y){
-var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'yellow'} ) );
-				sprite.scale.set( 4, 4, 1 );
-				sprite.position.set( x, y, 1 );
-				sceneOrtho.add( sprite );
-	sprites[sprites.length]=sprite;
-}
-function clearSprites(){
-	for (var i = sprites.length - 1; i >= 0; i--) {
-		sceneOrtho.remove(sprites[i]);
-	};
-	sprites=[];
-}
-this.mouseDownEvent=function(x, y)
-{
+
+	//Funcion de Renderizado.
+	this.render=function(){
+		renderer.render( sceneOrtho, cameraOrtho );
+	}
+	//Funcion de Anadir Sprite.
+	function addSprite(x,y){
+		var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'yellow'} ) );
+		sprite.scale.set( 4, 4, 1 );
+		sprite.position.set( x, y, 1 );
+		sceneOrtho.add( sprite );
+		sprites[sprites.length]=sprite;
+	}
+	//Funcion de limpiado de sprites.
+	function clearSprites(){
+		for (var i = sprites.length - 1; i >= 0; i--) {
+			sceneOrtho.remove(sprites[i]);
+		};
+		sprites=[];
+	}
+	//Mouse Down event.
+	this.mouseDownEvent=function(x, y)
+	{
 	//renderer.autoClear = false;
 	this.center[0]=x;
 	this.center[1]=y;
@@ -42,6 +52,7 @@ this.mouseDownEvent=function(x, y)
 	points.length = 1; // clear
 	addSprite(x,y);
 }
+//Dibujado de los Sprites.
 this.mouseMoveEvent=function(x, y)
 {
 	if (isDown)
@@ -52,6 +63,7 @@ this.mouseMoveEvent=function(x, y)
 		addSprite(x,y);
 	}
 }
+//Reconocimiento del gesto.
 this.mouseUpEvent=function(x, y)
 {
 	this.center[0]+=x;
@@ -70,20 +82,21 @@ this.mouseUpEvent=function(x, y)
 			$.notify("Result: " + result.Name + " (" + round(result.Score,2) + ").",{autoHide:true,clickToHide:true,position:"left top"});
 			if(this.printGesture){
 				var s="new Unistroke(name,new Array(";
-				for (var i = 0; i <points.length; i+=3) {
-					s+="new Point("+Math.floor(points[i].X)+","+Math.floor(points[i].Y)+"),";
-				};
-				s+="));"
-				$.notify(s,{autoHide:false,clickToHide:false,position:left});
-			}
-			name=result.Name;
-			nameAndCentr[0] = name;
-			nameAndCentr[1] = centroid;
-			
-		}
+					for (var i = 0; i <points.length; i+=3) {
+						s+="new Point("+Math.floor(points[i].X)+","+Math.floor(points[i].Y)+"),";
+					};
+					s+="));"
+$.notify(s,{autoHide:false,clickToHide:false,position:left});
+}
+//Seteamos los valores que obtenemos.
+name=result.Name;
+nameAndCentr[0] = name;
+nameAndCentr[1] = centroid;
+
+}
 		else // fewer than 10 points were inputted
 		{
-			$.notify("Too few points made. Please try again.",{autoHide:true,clickToHide:true,position:"top center"});
+			//$.notify("Too few points made. Please try again.",{autoHide:true,clickToHide:true,position:"top center"});
 		}
 		points=[];
 		clearSprites();
@@ -91,6 +104,7 @@ this.mouseUpEvent=function(x, y)
 	//renderer.autoClear = true;
 	return nameAndCentr;
 }
+
 function round(n, d) // round 'n' to 'd' decimals
 {
 	d = Math.pow(10, d);
