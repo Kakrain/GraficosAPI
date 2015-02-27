@@ -423,16 +423,19 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 				 			addThing(3,centroid);
 				 			break;
 				 		}
+				 		//Double circle creates a toroid
+			 			case "torRight":{
+			 				addThing(4,centroid);
+			 				break;
+			 			}
 						//Create a plane
 						case "planeright":
 						case "planeleft":{
-							var texturePiso = THREE.ImageUtils.loadTexture('chess.jpg');
-							var geometry = new THREE.PlaneBufferGeometry( 500, 500, 1, 1 );
-							var material = new THREE.MeshPhongMaterial( { /*combine: THREE.MixOperation, map:texturePiso*/color: 0xcccccc} );
+							var geometry = new THREE.PlaneBufferGeometry(500, 500);
+							var material = new THREE.MeshPhongMaterial( {color: 0xcccccc, side: THREE.DoubleSide} );
 							meshplane = new THREE.Mesh( geometry, material );
-							meshplane.position.set(0,0,0);
+							meshplane.position.set(0,-0.1,0);
 							meshplane.rotation.x=-0.5*Math.PI;
-							meshplane.castShadow=true;
 							meshplane.receiveShadow=true;
 							scene.add(meshplane);			
 							break;
@@ -476,12 +479,12 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 								light.shadowCameraVisible = true;
 								light.castShadow = true;
 								light.shadowDarkness = 0.7;
-								light.shadowCameraFov = 10;
+								light.shadowCameraFov = 20;
 								scene.add(light);
 								//Bulb of light	
-								var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
-								bulb.position.set(light.position.x, light.position.y, light.position.z);
-								scene.add(bulb);
+								//var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
+								//bulb.position.set(light.position.x, light.position.y, light.position.z);
+								//scene.add(bulb);
 								selected.getMeshes()[0].material.needsUpdate = true;
 							//Important parameters to appreciate the changes.
 							if(meshplane != null)
@@ -592,6 +595,10 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
     			var geometry = new THREE.CylinderGeometry(0,30,40,4);
     			break;
     		}
+    		case 4:{
+    			var geometry = new THREE.TorusGeometry(20,10,20,20);
+    			break;
+    		}
     	}
     	var mesh = new THREE.Mesh( geometry, material );
 		//$.notify("orig: " + centroid.x+","+centroid.y);
@@ -639,15 +646,43 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
  			selected.getMeshes()[0].visible = meshConfig.visible;
  			selected.getMeshes()[4].visible = meshConfig.visible;
  		} ); 
- 		Properties2.add( meshConfig, 'material', [ 'normal','basic','phong' ] ).onChange( function() {
+ 		Properties2.add( meshConfig, 'shading', [ 'flat','gouraud','phong' ] ).onChange( function() {
 		// console.log( box2Config.material );
-		if ( meshConfig.material === 'normal' ) {
-			selected.getMeshes()[0].material = new THREE.MeshNormalMaterial();
-		} else if ( meshConfig.material === 'basic' ) {
-			selected.getMeshes()[0].material = new THREE.MeshLambertMaterial();
+		
+		if ( meshConfig.shading === 'flat' ) {
+			for(var i=0; i< things.length; i++){
+				var color = things[i].getMeshes()[0].material.color;
+				var wf = things[i].getMeshes()[0].material.wireframe;
+				things[i].getMeshes()[0].material = new THREE.MeshLambertMaterial({color: color, shading: THREE.FlatShading, wireframe: wf});
+				//things[i].getMeshes()[0].material.color = color;
+			}
+			if(meshplane != null){
+				color = meshplane.material.color;
+				meshplane.material = new THREE.MeshLambertMaterial({color: color, shading: THREE.FlatShading});
+			}
+		} else if ( meshConfig.shading === 'gouraud' ) {
+				for(var i=0; i< things.length; i++){
+					var color = things[i].getMeshes()[0].material.color;
+					var wf = things[i].getMeshes()[0].material.wireframe;
+					things[i].getMeshes()[0].material = new THREE.MeshLambertMaterial({color: color, wireframe: wf});
+					//things[i].getMeshes()[0].material.color = color;
+				}
+				if(meshplane != null){
+					color = meshplane.material.color;
+					meshplane.material = new THREE.MeshLambertMaterial({color: color});
+				}
 			} //Revisar error Color Ambiente
-			else if ( meshConfig.material === 'phong' ) {
-				selected.getMeshes()[0].material = new THREE.MeshPhongMaterial();
+			else if ( meshConfig.shading === 'phong' ) {
+				for(var i=0; i< things.length; i++){
+					var color = things[i].getMeshes()[0].material.color;
+					var wf = things[i].getMeshes()[0].material.wireframe;
+					things[i].getMeshes()[0].material = new THREE.MeshPhongMaterial({color: color, wireframe: wf});
+					//things[i].getMeshes()[0].material.color = color;
+				}
+				if(meshplane != null){
+					color = meshplane.material.color;
+					meshplane.material = new THREE.MeshPhongMaterial({color: color});
+				}
 			}
 		} );
 

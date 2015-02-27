@@ -27,12 +27,12 @@
 	//Arreglo de things.
 	var things=[];
 	//Renderer y sus propiedades.
-	var renderer = new THREE.WebGLRenderer({antialias: true});
-		renderer.setClearColor( 0x000000 );
+	var renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+		renderer.setClearColor( 0xffffff );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 		renderer.shadowMapEnabled = true;
 		document.body.appendChild( renderer.domElement );
-		//THREE.ImageUtils.crossOrigin = "anonymous";
+
 
 	//Planos de la escena para realizar el picking y el ray tracing.
 	var geometryPlanes = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );

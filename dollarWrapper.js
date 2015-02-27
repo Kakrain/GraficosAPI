@@ -40,7 +40,6 @@ function DollarWrapper(_renderer){
 	//Mouse Down event.
 	this.mouseDownEvent=function(x, y)
 	{
-	//renderer.autoClear = false;
 	this.center[0]=x;
 	this.center[1]=y;
 	
@@ -86,14 +85,13 @@ this.mouseUpEvent=function(x, y)
 						s+="new Point("+Math.floor(points[i].X)+","+Math.floor(points[i].Y)+"),";
 					};
 					s+="));"
-$.notify(s,{autoHide:false,clickToHide:false,position:left});
-}
-//Seteamos los valores que obtenemos.
-name=result.Name;
-nameAndCentr[0] = name;
-nameAndCentr[1] = centroid;
-
-}
+			$.notify(s,{autoHide:false,clickToHide:false,position:left});
+		}
+			//Seteamos los valores que obtenemos.
+			name=result.Name;
+			nameAndCentr[0] = name;
+			nameAndCentr[1] = centroid;
+		}
 		else // fewer than 10 points were inputted
 		{
 			//$.notify("Too few points made. Please try again.",{autoHide:true,clickToHide:true,position:"top center"});
@@ -101,7 +99,6 @@ nameAndCentr[1] = centroid;
 		points=[];
 		clearSprites();
 	}
-	//renderer.autoClear = true;
 	return nameAndCentr;
 }
 
