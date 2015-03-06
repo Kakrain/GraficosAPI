@@ -14,4 +14,7 @@ var meshConfigData = function() {
   this.positionZ = 0;
   this.castShadow = true;
   this.color1 = 0xff0000;
+  //*****************************************************************
+  this.Lights = true;
+  this.SpotLights_Debug = false;
   }

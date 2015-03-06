@@ -1,4 +1,6 @@
-function Thing(_mesh,_scene,_floors){
+//*******************************************************************************************************************
+//Parametro _light añadido
+function Thing(_mesh,_scene,_floors,_light){
 	//Variables locales.
 	var self=this;
 	var floors=_floors; //Pisos del mesh
@@ -12,16 +14,18 @@ function Thing(_mesh,_scene,_floors){
 	var v=new THREE.Vector3();
 	var v2=new THREE.Vector3();
 
+
 	var material= new THREE.MeshBasicMaterial( {color:'red', side:THREE.DoubleSide, transparent:true, opacity:0.5} );
 	//Sombra xz del mesh.
-	var xz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dz, 1, 1 ), material );
+	var xz = new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dz, 1, 1 ), material );
 	//SOmbra xy del mesh.
-	var xy=new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dy, 1, 1 ), material );
+	var xy = new THREE.Mesh( new THREE.PlaneBufferGeometry( dx, dy, 1, 1 ), material );
 	//Sombra yz del mesh.
-	var yz=new THREE.Mesh( new THREE.PlaneBufferGeometry( dy, dz, 1, 1 ), material );
+	var yz = new THREE.Mesh( new THREE.PlaneBufferGeometry( dy, dz, 1, 1 ), material );
 	//Create a ilusion about the selected item creating a backside object with a fluorescent color, then resize for making bigger.
 	var outline;
 	
+
 	//Rotamos las sombras para ubicarlas en los planos respectivos.
 	yz.position.set(0.01,_mesh.position.y,_mesh.position.z);
 	yz.rotation.y=Math.PI/2
@@ -36,7 +40,7 @@ function Thing(_mesh,_scene,_floors){
 	meshes[meshes.length]=xz;
 	meshes[meshes.length]=xy;
 	meshes[meshes.length]=yz;
-	
+
 	//Creamos y anadimos el outline al mesh.
 	outline = new THREE.Mesh( meshes[0].geometry, new THREE.MeshBasicMaterial( { color: 0x00ff00, side: THREE.BackSide } ) );
 	outline.scale.multiplyScalar(1.05);
@@ -65,9 +69,28 @@ function Thing(_mesh,_scene,_floors){
 	c=new THREE.Mesh(new THREE.BoxGeometry(sizeSizers,sizeSizers,sizeSizers),new THREE.MeshBasicMaterial({color: 0x0f0f0f}));
 	c.position.set(meshes[0].position.x,meshes[0].position.y,meshes[0].position.z-(dz/2+sizeSizers/2));
 	meshes[meshes.length]=c;
+	//}
 
 	//Solo mostramos el primer mesh al agregarlo a la escena, conforme cambie de estado se agregan los demas componentes.
 	scene.add(meshes[0]);
+
+
+
+
+
+
+	//**********************************************************************************************************************
+	//Variable que es diferente de null cuando el objeto es un foco (contiene el spotlight)
+	this.light = _light;
+	if(this.light != null){
+		for(var i = 1; i < meshes.length; i++){
+			if(i != 4)
+				meshes[i].visible = false; //Hace invisibles los sizers y sombras de traslacion
+		}
+	}
+
+
+
 
 
 
@@ -131,6 +154,13 @@ function Thing(_mesh,_scene,_floors){
 				meshes[0].position.x=p.x+0.001;
 				meshes[0].position.y=p.y+0.001;
 				meshes[0].position.z=p.z+0.001;
+
+				if(this.light != null){
+					this.light.position.x=p.x+0.001;
+					this.light.position.y=p.y+0.001;
+					this.light.position.z=p.z+0.001;
+				}
+
 				xz.position.set(meshes[0].position.x,0.01,meshes[0].position.z);
 				xy.position.set(meshes[0].position.x,meshes[0].position.y,0.01);
 				yz.position.set(0.01,meshes[0].position.y,meshes[0].position.z);
@@ -142,36 +172,59 @@ function Thing(_mesh,_scene,_floors){
 		}
 		//Cuando usamos las sombras.
 			case 1:{//xz plane move.
+
+
+
+
+
+
+				//********************************************************************************************************
+				//Si es el objeto es un foco se deshabilitan los cuadros de traslacion
+				if(this.light == null){
 				meshes[0].position.x=meshes[index].position.x;
 				meshes[0].position.z=meshes[index].position.z;
 				setOutlinePosition();
 				meshes[2].position.x=meshes[index].position.x;
 				meshes[3].position.z=meshes[index].position.z;
 				updateSizers();
+				}
 				break;
 			}
 			case 2:{//xy plane move.
+				//********************************************************************************************************
+				if(this.light == null){
 				meshes[0].position.x=meshes[index].position.x;
 				meshes[0].position.y=meshes[index].position.y;
 				setOutlinePosition();
 				meshes[1].position.x=meshes[index].position.x;
 				meshes[3].position.y=meshes[index].position.y;
 				updateSizers();
+				}
 				break;
 			}
 			case 3:{//yz plane move.
+				//********************************************************************************************************
+				if(this.light == null){
 				meshes[0].position.z=meshes[index].position.z;
 				meshes[0].position.y=meshes[index].position.y;
 				setOutlinePosition();
 				meshes[1].position.z=meshes[index].position.z;
 				meshes[2].position.y=meshes[index].position.y;
 				updateSizers();
+				}
 				break;
 			}
 			case 8:
 			case 5:{//Escalamiento en X
 				intersects = raycast.intersectObject(plane);
-				if(intersects.length!=0){
+
+
+
+
+
+				//*****************************************************************************************************
+				//Deshabilita los sizers si el objeto es un foco
+				if(intersects.length!=0 && this.light == null){
 					var p=intersects[0].point;
 					v.set(p.x-meshes[0].position.x,p.y-meshes[0].position.y,p.z-meshes[0].position.z);
 					v2.set((index<8)?1:-1,0,0);
@@ -188,7 +241,8 @@ function Thing(_mesh,_scene,_floors){
 			case 9:
 			case 6:{//Escalamiento en Y
 				intersects = raycast.intersectObject(plane);
-				if(intersects.length!=0){
+				//************************************************************************************************
+				if(intersects.length!=0 && this.light == null){
 					var p=intersects[0].point;
 					v.set(p.x-meshes[0].position.x,p.y-meshes[0].position.y,p.z-meshes[0].position.z);
 					v2.set(0,(index<8)?1:-1,0);
@@ -206,7 +260,8 @@ function Thing(_mesh,_scene,_floors){
 			case 7:{//Escalamiento en Z
 
 				intersects = raycast.intersectObject(plane);
-				if(intersects.length!=0){
+				//************************************************************************************************
+				if(intersects.length!=0 && this.light == null){
 					var p=intersects[0].point;
 					v.set(p.x-meshes[0].position.x,p.y-meshes[0].position.y,p.z-meshes[0].position.z);
 					v2.set(0,0,(index<8)?1:-1);

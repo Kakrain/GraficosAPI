@@ -1,5 +1,5 @@
 
-THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, things, domElement, localElement) {
+THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, things, lights, domElement, localElement) {
 
 	this.object = object;
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
@@ -383,12 +383,37 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 						var thing = thingAndIndex[0];
 						var thingIndex = thingAndIndex[1];
 						scene.remove(thing.getMeshes()[0]);
+
+
+
+						//*****************************************************************************************
+						//En caso que el objeto sea un foco, elimine tambien su respectiva luz
+						if(thing.light != null){
+							thing.light.shadowCameraVisible = false;
+							scene.remove(thing.light);							
+						}
+
+
+
+
 						things.splice(thingIndex,1);
 					}
 					else{
 						if(intersects[0].object == selected.getMeshes()[0]){
 							selected.unselect();
 							scene.remove(selected.getMeshes()[0]);
+
+
+
+							//*****************************************************************************************
+							if(selected.light != null){
+								selected.light.shadowCameraVisible = false;
+								updateMatrixWorld();
+								scene.remove(selected.light);
+							}
+
+
+
 							things.splice(selectedIndex,1);
 							selected=null;
 						}
@@ -397,9 +422,27 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 							var thing = thingAndIndex[0];
 							var thingIndex = thingAndIndex[1];
 							scene.remove(thing.getMeshes()[0]);
+
+
+
+
+
+							//*****************************************************************************************
+							if(thing.light != null){
+								thing.light.shadowCameraVisible = false;
+								updateMatrixWorld();
+								scene.remove(thing.light);
+							}
+
+
+
+
 							things.splice(thingIndex,1);
 						}
 					}
+					
+					if(meshplane != null)
+						meshplane.material.needsUpdate = true;
 				}
 			}
 			if(selected==null){
@@ -432,7 +475,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 						case "planeright":
 						case "planeleft":{
 							var geometry = new THREE.PlaneBufferGeometry(500, 500);
-							var material = new THREE.MeshPhongMaterial( {color: 0xcccccc, side: THREE.DoubleSide} );
+							var material = new THREE.MeshLambertMaterial( {color: 0xcccccc, side: THREE.DoubleSide} );
 							meshplane = new THREE.Mesh( geometry, material );
 							meshplane.position.set(0,-0.1,0);
 							meshplane.rotation.x=-0.5*Math.PI;
@@ -454,8 +497,6 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 						//X agrega una luz entre el objeto y el plano.
 						case "Xleft":
 						case "Xright":{
-							var flareTexture = THREE.ImageUtils.loadTexture("whiteFlare.jpg");
-							var flareColor = new THREE.Color(0xffffff);
 							var xy=wrapper.center;
 							mouseVector.x = 2 * (xy[0]/ window.innerWidth) - 1;
 							mouseVector.y = 1 - 2 * (xy[1]/ window.innerHeight );
@@ -475,22 +516,41 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 								light.target=selected.getMeshes()[0];
 								light.position.x=p.x;
 								light.position.y=p.y;
-								light.position.z=p.z;					
-								light.shadowCameraVisible = true;
+								light.position.z=p.z;	
+
+
+
+								//*******************************************************************************************				
+								//light.shadowCameraVisible = true;
 								light.castShadow = true;
 								light.shadowDarkness = 0.7;
 								light.shadowCameraFov = 20;
 								scene.add(light);
-								//Bulb of light	
-								//var bulb = new THREE.LensFlare(flareTexture, 200, 0.0, THREE.AdditiveBlending, flareColor);
-								//bulb.position.set(light.position.x, light.position.y, light.position.z);
-								//scene.add(bulb);
-								selected.getMeshes()[0].material.needsUpdate = true;
-							//Important parameters to appreciate the changes.
-							if(meshplane != null)
-								meshplane.material.needsUpdate = true;
 
-						}
+
+
+
+
+
+								//**********************************************************************************************
+								//Se crea la lampara que contiene la luz
+								var lampGeo = new THREE.SphereGeometry(4,10,10);
+								var lampMat = new THREE.MeshPhongMaterial({color: 0xcccccc, transparent: true, opacity: 0.5});
+								var lamp = new THREE.Mesh(lampGeo, lampMat);
+								lamp.position.set(light.position.x, light.position.y, light.position.z);
+								var thing = new Thing(lamp,scene,floors,light);
+								things.push(thing);
+								meshes.push(lamp);
+
+
+
+
+
+								selected.getMeshes()[0].material.needsUpdate = true;
+								//Important parameters to appreciate the changes.
+								if(meshplane != null)
+									meshplane.material.needsUpdate = true;
+							}
 						break;
 					}
 
@@ -623,7 +683,7 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
 		}
 		mesh.castShadow=true;
 		mesh.receiveShadow=true;
-		var thing = new Thing(mesh,scene,floors);
+		var thing = new Thing(mesh,scene,floors,null);
 		things.push(thing);
 		meshes.push(mesh);
 	}
@@ -637,58 +697,109 @@ THREE.OrbitControls = function ( object, wrapper, _meshes, _scene, floors, thing
  		var Properties2 = meshGui.addFolder('Aspecto');
  		Properties2.addColor( meshConfig, 'color1', color ).onChange( function() {
  			selected.getMeshes()[0].material.color.set(meshConfig.color1); 
- 			selected.getMeshes()[0].material.ambient.set(meshConfig.color1);  
+ 			selected.getMeshes()[0].material.ambient.set(meshConfig.color1); 
+ 			//******************************************************************************************************************
+ 			if(selected.light != null)
+ 				selected.light.color.set(meshConfig.color1);
  		} ); 
  		Properties2.add( meshConfig, 'castShadow', false ).onChange( function() {
- 			selected.getMeshes()[0].castShadow = meshConfig.castShadow;
+ 			//******************************************************************************************************************
+ 			if(selected.light == null)
+ 				selected.getMeshes()[0].castShadow = meshConfig.castShadow;
  		} ); 
  		Properties2.add( meshConfig, 'visible', false ).onChange( function() {
  			selected.getMeshes()[0].visible = meshConfig.visible;
  			selected.getMeshes()[4].visible = meshConfig.visible;
  		} ); 
+ 		Properties2.add( meshConfig, 'wireframe', false ).onChange( function() {
+ 			selected.getMeshes()[0].material.wireframe = meshConfig.wireframe;
+ 		} ); 
+
+
+
+
+ 		//*******************************************************************************************************************
+ 		//checkbox de luces generales
+ 		Properties2.add( meshConfig, 'Lights', true ).onChange( function() {
+ 			if(meshConfig.Lights == false){
+ 				//for(var i=0; i<lights.length; i++)
+ 					lights[2].intensity = 0.0;
+ 					lights[2].castShadow = false;
+ 					if(meshplane != null)
+						meshplane.material.needsUpdate = true;
+ 			}
+ 			else{
+ 				//for(var i=0; i<lights.length; i++)
+ 					lights[2].intensity = 0.3;
+ 					lights[2].castShadow = true;
+ 					if(meshplane != null)
+						meshplane.material.needsUpdate = true;
+ 			}
+ 		} );
+ 		//checkbox de debug de las luces creadas
+ 		/*Properties2.add( meshConfig, 'SpotLights_Debug', false ).onChange( function() {
+ 				for(var i=0; i<things.length; i++)
+ 					if(things[i].light != null){
+ 						things[i].light.shadowCameraVisible = meshConfig.SpotLights_Debug;
+ 					}
+ 			
+ 		} );*/
+
+
+
+
+
+
+
  		Properties2.add( meshConfig, 'shading', [ 'flat','gouraud','phong' ] ).onChange( function() {
 		// console.log( box2Config.material );
 		
 		if ( meshConfig.shading === 'flat' ) {
 			for(var i=0; i< things.length; i++){
+
+
+				//**************************************************************************************************************
+				//Valida que no sea un foco
+				if(things[i].light == null){
 				var color = things[i].getMeshes()[0].material.color;
 				var wf = things[i].getMeshes()[0].material.wireframe;
 				things[i].getMeshes()[0].material = new THREE.MeshLambertMaterial({color: color, shading: THREE.FlatShading, wireframe: wf});
-				//things[i].getMeshes()[0].material.color = color;
+				}
 			}
 			if(meshplane != null){
 				color = meshplane.material.color;
-				meshplane.material = new THREE.MeshLambertMaterial({color: color, shading: THREE.FlatShading});
+				meshplane.material = new THREE.MeshLambertMaterial({color: color, shading: THREE.FlatShading, side: THREE.DoubleSide});
 			}
 		} else if ( meshConfig.shading === 'gouraud' ) {
 				for(var i=0; i< things.length; i++){
+					//**************************************************************************************************************
+					if(things[i].light == null){
 					var color = things[i].getMeshes()[0].material.color;
 					var wf = things[i].getMeshes()[0].material.wireframe;
 					things[i].getMeshes()[0].material = new THREE.MeshLambertMaterial({color: color, wireframe: wf});
-					//things[i].getMeshes()[0].material.color = color;
+					}
 				}
 				if(meshplane != null){
 					color = meshplane.material.color;
-					meshplane.material = new THREE.MeshLambertMaterial({color: color});
+					meshplane.material = new THREE.MeshLambertMaterial({color: color, side: THREE.DoubleSide});
 				}
-			} //Revisar error Color Ambiente
+			} 
 			else if ( meshConfig.shading === 'phong' ) {
 				for(var i=0; i< things.length; i++){
+					//**************************************************************************************************************
+					if(things[i].light == null){
 					var color = things[i].getMeshes()[0].material.color;
 					var wf = things[i].getMeshes()[0].material.wireframe;
 					things[i].getMeshes()[0].material = new THREE.MeshPhongMaterial({color: color, wireframe: wf});
-					//things[i].getMeshes()[0].material.color = color;
+					}
 				}
 				if(meshplane != null){
 					color = meshplane.material.color;
-					meshplane.material = new THREE.MeshPhongMaterial({color: color});
+					meshplane.material = new THREE.MeshPhongMaterial({color: color, side: THREE.DoubleSide});
 				}
 			}
 		} );
 
- 		Properties2.add( meshConfig, 'wireframe', false ).onChange( function() {
- 			selected.getMeshes()[0].material.wireframe = meshConfig.wireframe;
- 		} ); 
 
  		var Properties1 = meshGui.addFolder('Geometria');
  		Properties1.add( meshConfig, 'positionX' ).onFinishChange( function(){

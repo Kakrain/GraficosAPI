@@ -24,7 +24,7 @@ function DollarWrapper(_renderer){
 	}
 	//Funcion de Anadir Sprite.
 	function addSprite(x,y){
-		var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'yellow'} ) );
+		var sprite = new THREE.Sprite( new THREE.SpriteMaterial( {color:'cyan'} ) );
 		sprite.scale.set( 4, 4, 1 );
 		sprite.position.set( x, y, 1 );
 		sceneOrtho.add( sprite );

@@ -24,6 +24,9 @@
 	var hemiLightIN=true;
 	var dirLightIN=true;
 	var lightIN=true;
+	//***********************************************************************************************************************
+	//Arreglo de luces generales
+	var lights=[];
 	//Arreglo de things.
 	var things=[];
 	//Renderer y sus propiedades.
@@ -37,7 +40,7 @@
 	//Planos de la escena para realizar el picking y el ray tracing.
 	var geometryPlanes = new THREE.PlaneBufferGeometry( 1000, 1000, 1, 1 );
 	var materialPlanes  = new THREE.MeshPhongMaterial();
-	var floors=[]
+	var floors=[];
 	var floor = new THREE.Mesh( geometryPlanes, materialPlanes );
 		floor.material.side = THREE.DoubleSide;
 		floor.rotation.x = Math.PI/2;
@@ -53,16 +56,25 @@
 		floors[2].updateMatrixWorld();
 	//Encapsulado del dollar.js
 	var dollarwrapper=new DollarWrapper(renderer);
+
+
+
+
+	//*************************************************************************************************************************
+	//Anadimos las luces.
+	var ambienLight;
+	seHizoLaLuz();
 	//Funcion para el control de la camara y el core del API.
-	var controls= new THREE.OrbitControls(camera,dollarwrapper,meshes,scene,floors,things,renderer.domElement);
+	var controls= new THREE.OrbitControls(camera,dollarwrapper,meshes,scene,floors,things,lights,renderer.domElement);
 	
+
+
+
+
 	//Creamos los axis.
 	var axes = buildAxes();
 	scene.add( axes );
 
-	//Anadimos las luces.
-	var ambienLight;
-	seHizoLaLuz();
     
 	camera.position.set(100,125,250);
 
@@ -130,19 +142,31 @@
 
         var light1 = new THREE.DirectionalLight(0xFFFFFF , 0.3);
 		light1.position.set(-200,150,-200);
+		//light1.castShadow = true;
 		scene.add(light1);
+		//**********************************************************************************************************
+		lights.push(light1);
 
 		var light2 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
 		light2.position.set(200,150,200);
 		scene.add(light2);
+		//**********************************************************************************************************
+		lights.push(light2);
 
 		var light3 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
 		light3.position.set(-200,150,200);
+		//**********************************************************************************************************
+		light3.castShadow = true;
 		scene.add(light3);
+		lights.push(light3);
 
 		var light4 = new THREE.DirectionalLight(0xFFFFFF, 0.3);
 		light4.position.set(200,150,-200);
+		//light4.castShadow = true;
 		scene.add(light4);
+		//**********************************************************************************************************
+		lights.push(light4);
+
 
 	}
 
